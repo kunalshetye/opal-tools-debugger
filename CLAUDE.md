@@ -4,7 +4,7 @@ Instructions for Claude Code when working on this project.
 
 ## Project Overview
 
-Opal Tools Debugger is an NPX-executable SvelteKit app for testing Opal tools locally. Users connect to a discovery endpoint, browse available tools, fill in parameters, and execute them — all from the browser.
+OTD (Opal Tools Debugger) is an NPX-executable, fully client-side SvelteKit app for testing Opal tools locally. Users connect to a discovery endpoint, browse available tools, fill in parameters, and execute them — all from the browser. No server-side code.
 
 ## Package Manager
 
@@ -19,7 +19,7 @@ bun run test
 
 ## Tech Stack
 
-- **SvelteKit** with `@sveltejs/adapter-node` — builds to a standalone Node server
+- **SvelteKit** with `@sveltejs/adapter-static` — builds to a fully static SPA (no server-side code)
 - **Svelte 5** — uses runes (`$state`, `$derived`, `$effect`), NOT legacy stores or `let` bindings
 - **Tailwind CSS 4** — utility-first, configured via `@tailwindcss/vite` plugin, class-based dark mode via `@custom-variant dark`
 - **Commander** — CLI argument parsing in `bin/cli.js`
@@ -27,10 +27,6 @@ bun run test
 - **TypeScript** throughout
 
 ## Architecture
-
-### Runtime Environment Variables
-
-Use `$env/dynamic/private` for server-side env vars. **Never use `process.env`** in SvelteKit source files — Vite statically replaces it at build time.
 
 ### State Management
 
@@ -67,7 +63,7 @@ Discovery and tool execution happen client-side via `fetch()`. CORS is assumed o
 
 ### CLI → UI Flow
 
-`bin/cli.js` sets env vars → SvelteKit starts → `/api/config` endpoint reads env vars → client fetches config on mount → pre-fills the connection form.
+`bin/cli.js` starts a static file server → opens `http://localhost:{port}?d={url}&t={token}` → client reads URL query params on mount → pre-fills the connection form. No server-side code involved.
 
 ### Connection Switcher
 
@@ -92,7 +88,7 @@ Tool parameter presets are stored in IndexedDB (`opal-debugger` database, `prese
 
 | Path | Purpose |
 |------|---------|
-| `bin/cli.js` | CLI entry point, sets env vars, starts server |
+| `bin/cli.js` | CLI entry point, serves static files, opens URL with query params |
 | `src/lib/types.ts` | Shared TypeScript interfaces |
 | `src/lib/api/discovery.ts` | Fetch and validate discovery endpoint |
 | `src/lib/api/executor.ts` | Execute tool with params, measure timing |
@@ -111,8 +107,10 @@ Tool parameter presets are stored in IndexedDB (`opal-debugger` database, `prese
 | `src/lib/components/ResponseViewer.svelte` | Response display (status, headers, body, timing) |
 | `src/lib/components/JsonViewer.svelte` | Collapsible syntax-highlighted JSON tree |
 | `src/routes/+layout.svelte` | App layout with header + theme init |
-| `src/routes/+page.svelte` | Home page (connect) |
+| `src/routes/+layout.ts` | SPA config (ssr=false, prerender=false) |
+| `src/routes/+page.svelte` | Home page (connect), reads URL query params |
 | `src/routes/tools/+page.svelte` | Tools page — sidebar + detail panel |
+| `netlify.toml` | Netlify build config with SPA redirect |
 
 ## Svelte 5 Gotchas
 

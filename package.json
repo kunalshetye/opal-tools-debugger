@@ -1,9 +1,9 @@
 {
-	"name": "@kunalshetye/opal-tools-debugger",
-	"version": "0.0.1",
+	"name": "@kunalshetye/otd",
+	"version": "0.0.2",
 	"type": "module",
 	"bin": {
-		"opal-tools-debugger": "./bin/cli.js"
+		"otd": "./bin/cli.js"
 	},
 	"files": [
 		"build",
@@ -14,7 +14,6 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "node build",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -30,7 +29,7 @@
 	"devDependencies": {
 		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.39.2",
-		"@sveltejs/adapter-node": "^5.0.0",
+		"@sveltejs/adapter-static": "^3.0.0",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",

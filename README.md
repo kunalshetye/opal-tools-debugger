@@ -1,11 +1,18 @@
-# Opal Tools Debugger
+# OTD (Opal Tools Debugger)
 
 A local debugger for [Opal tools](https://opal.dev) — test and execute tools from your browser without deploying.
 
 ## Quick Start
 
 ```bash
-npx @kunalshetye/opal-tools-debugger
+npx @kunalshetye/otd
+```
+
+Or install globally:
+
+```bash
+npm i -g @kunalshetye/otd
+otd -d http://localhost:3000/discovery
 ```
 
 The debugger opens at `http://localhost:4873`. Enter your discovery endpoint URL in the UI and start testing.
@@ -13,7 +20,7 @@ The debugger opens at `http://localhost:4873`. Enter your discovery endpoint URL
 ### CLI Options
 
 ```bash
-npx @kunalshetye/opal-tools-debugger \
+npx @kunalshetye/otd \
   --discovery-url https://your-opal-tools.example.com/discovery \
   --bearer-token YOUR_TOKEN \
   --port 4873
@@ -45,10 +52,10 @@ Add a script to your project's `package.json` so your team can launch the debugg
 > **One-off usage without a script** — you can run the debugger directly without adding it to `package.json`:
 >
 > ```bash
-> npx @kunalshetye/opal-tools-debugger                          # npm
-> yarn dlx @kunalshetye/opal-tools-debugger                     # yarn
-> pnpm dlx @kunalshetye/opal-tools-debugger                     # pnpm
-> bunx @kunalshetye/opal-tools-debugger                         # bun
+> npx @kunalshetye/otd                          # npm
+> yarn dlx @kunalshetye/otd                     # yarn
+> pnpm dlx @kunalshetye/otd                     # pnpm
+> bunx @kunalshetye/otd                         # bun
 > ```
 
 ### Basic — just launch the debugger
@@ -56,7 +63,7 @@ Add a script to your project's `package.json` so your team can launch the debugg
 ```json
 {
 	"scripts": {
-		"debugger": "npx @kunalshetye/opal-tools-debugger"
+		"debugger": "npx @kunalshetye/otd"
 	}
 }
 ```
@@ -75,7 +82,7 @@ Opens at `http://localhost:4873`. Enter your discovery URL manually in the UI.
 ```json
 {
 	"scripts": {
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery"
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery"
 	}
 }
 ```
@@ -94,7 +101,7 @@ The discovery URL is pre-filled in the UI on launch — just click Connect.
 ```json
 {
 	"scripts": {
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -t $OPAL_TOKEN"
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery -t $OPAL_TOKEN"
 	}
 }
 ```
@@ -104,7 +111,7 @@ Reads the token from an environment variable. You can also hardcode a dev token 
 ```json
 {
 	"scripts": {
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -t dev-token-123"
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery -t dev-token-123"
 	}
 }
 ```
@@ -121,9 +128,9 @@ bun run debugger       # bun
 ```json
 {
 	"scripts": {
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery",
-		"debugger:staging": "npx @kunalshetye/opal-tools-debugger -d https://staging.example.com/discovery -t $STAGING_TOKEN",
-		"debugger:prod": "npx @kunalshetye/opal-tools-debugger -d https://api.example.com/discovery -t $PROD_TOKEN -p 4874"
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery",
+		"debugger:staging": "npx @kunalshetye/otd -d https://staging.example.com/discovery -t $STAGING_TOKEN",
+		"debugger:prod": "npx @kunalshetye/otd -d https://api.example.com/discovery -t $PROD_TOKEN -p 4874"
 	}
 }
 ```
@@ -156,7 +163,7 @@ bun run debugger:prod
 {
 	"scripts": {
 		"dev": "node server.js",
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -p 9000"
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery -p 9000"
 	}
 }
 ```
@@ -171,7 +178,7 @@ If you use a tool like [concurrently](https://www.npmjs.com/package/concurrently
 {
 	"scripts": {
 		"dev": "node server.js",
-		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery",
+		"debugger": "npx @kunalshetye/otd -d http://localhost:3000/discovery",
 		"dev:debug": "concurrently \"npm run dev\" \"npm run debugger\""
 	}
 }
@@ -186,12 +193,12 @@ bun run dev:debug      # bun
 
 ## How It Works
 
-1. The CLI (`bin/cli.js`) sets environment variables and starts a SvelteKit (adapter-node) server.
-2. On first load, the UI fetches `/api/config` to pick up CLI-provided defaults.
+1. The CLI (`bin/cli.js`) starts a lightweight static file server and opens the app with query parameters (`?d=...&t=...`) for pre-filling.
+2. The client reads query params on mount and pre-fills the connection form.
 3. The client calls your discovery endpoint directly (CORS must be open) and renders the tool list.
 4. Tool execution sends requests from the browser to your Opal tool endpoints.
 
-All state (connection, tools, history, theme) lives in the browser's localStorage. Parameter presets use IndexedDB for structured storage. Nothing is stored server-side.
+The app is **100% client-side** — built with `adapter-static`, no server-side code. All state (connection, tools, history, theme) lives in the browser's localStorage. Parameter presets use IndexedDB for structured storage.
 
 ## Development
 
@@ -207,7 +214,7 @@ bun run test       # Run unit tests
 
 ## Tech Stack
 
-- [SvelteKit](https://svelte.dev/docs/kit) with adapter-node
+- [SvelteKit](https://svelte.dev/docs/kit) with adapter-static (fully client-side SPA)
 - [Svelte 5](https://svelte.dev/docs/svelte) runes (`$state`, `$derived`, `$effect`)
 - [Tailwind CSS 4](https://tailwindcss.com) with class-based dark mode (`@custom-variant dark`)
 - [Commander](https://github.com/tj/commander.js) for the CLI
@@ -248,9 +255,9 @@ src/
       preset-merge.ts               # Merge preset values with tool parameters
   routes/
     +layout.svelte                  # App layout with header + theme init
+    +layout.ts                      # SPA config (ssr=false, prerender=false)
     +page.svelte                    # Home — connection form
     layout.css                      # Global styles + Tailwind config
-    api/config/+server.ts           # Returns CLI-provided env vars
     tools/
       +page.svelte                  # Tools page — sidebar + detail panel
 ```

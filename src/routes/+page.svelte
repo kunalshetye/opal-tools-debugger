@@ -3,26 +3,23 @@
 	import ConnectionForm from '$lib/components/ConnectionForm.svelte';
 	import { connectionState } from '$lib/stores/connection.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 
 	let configUrl = $state('');
 	let configToken = $state('');
 
-	onMount(async () => {
+	onMount(() => {
 		// If already connected, go straight to tools page
 		if (connectionState.connected) {
 			goto('/tools');
 			return;
 		}
 
-		// Fetch CLI-provided defaults
-		try {
-			const res = await fetch('/api/config');
-			const data = await res.json();
-			if (data.discoveryUrl) configUrl = data.discoveryUrl;
-			if (data.bearerToken) configToken = data.bearerToken;
-		} catch {
-			// CLI config not available (e.g., in dev mode), ignore
-		}
+		// Read CLI-provided defaults from URL query params
+		const d = page.url.searchParams.get('d');
+		const t = page.url.searchParams.get('t');
+		if (d) configUrl = d;
+		if (t) configToken = t;
 	});
 </script>
 
