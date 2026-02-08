@@ -168,7 +168,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-850">
+<div class="flex h-full flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-900">
 	{#if tool}
 		<!-- Tool header -->
 		<div class="shrink-0 border-b border-zinc-200 bg-white px-5 py-3 dark:border-zinc-700 dark:bg-zinc-900">
@@ -261,7 +261,7 @@
 
 					{#if results.length === 0}
 						<div class="flex items-center justify-center rounded-lg border border-zinc-200 bg-white/50 py-12 dark:border-zinc-700 dark:bg-zinc-800/50">
-							<p class="text-sm text-zinc-500 italic">Execute the tool to see the response here.</p>
+							<p class="text-sm text-zinc-500 italic dark:text-zinc-400">Execute the tool to see the response here.</p>
 						</div>
 					{:else if showDiff && results.length >= 2}
 						<ResponseDiff resultA={results[1]} resultB={results[0]} />
@@ -299,7 +299,7 @@
 			<svg class="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 			</svg>
-			<p class="text-sm text-zinc-500">Select a tool from the sidebar</p>
+			<p class="text-sm text-zinc-500 dark:text-zinc-400">Select a tool from the sidebar</p>
 		</div>
 	{/if}
 </div>

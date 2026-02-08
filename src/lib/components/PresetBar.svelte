@@ -98,7 +98,7 @@
 			bind:value={presetName}
 			onkeydown={handleKeydown}
 			placeholder="Preset name"
-			class="h-7 rounded border border-zinc-300 bg-white px-2 text-xs text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+			class="h-7 rounded border border-zinc-300 bg-white px-2 text-xs text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
 		/>
 		<button
 			onclick={handleConfirmSave}

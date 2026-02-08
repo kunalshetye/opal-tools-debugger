@@ -4,7 +4,6 @@
 	import Header from '$lib/components/Header.svelte';
 	import ActivityLogPanel from '$lib/components/ActivityLogPanel.svelte';
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import { initTheme } from '$lib/stores/theme.svelte';
 	import { activityLogState, togglePanel, closePanel } from '$lib/stores/activity-log.svelte';
 	import { closeSidebar, uiState } from '$lib/stores/ui.svelte';
@@ -13,9 +12,8 @@
 
 	const isToolsPage = $derived($page.url.pathname.startsWith('/tools'));
 
-	onMount(() => {
-		initTheme();
-	});
+	// Apply theme immediately at module level to prevent flash of wrong theme
+	initTheme();
 
 	function handleKeydown(e: KeyboardEvent) {
 		const mod = e.ctrlKey || e.metaKey;

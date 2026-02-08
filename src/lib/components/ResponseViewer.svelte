@@ -134,7 +134,7 @@
 			</div>
 		{:else if activeTab === 'headers'}
 			{#if Object.keys(result.headers).length === 0}
-				<p class="text-sm text-zinc-500 italic">No headers available.</p>
+				<p class="text-sm text-zinc-500 italic dark:text-zinc-400">No headers available.</p>
 			{:else}
 				<div class="space-y-1">
 					{#each Object.entries(result.headers) as [key, value]}

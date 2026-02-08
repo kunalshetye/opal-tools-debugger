@@ -109,7 +109,7 @@
 	<div>
 		<label for="bearer-token" class="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
 			Bearer Token
-			<span class="text-zinc-400">(optional)</span>
+			<span class="text-zinc-400 dark:text-zinc-500">(optional)</span>
 		</label>
 		<div class="relative">
 			<input
@@ -122,7 +122,7 @@
 			<button
 				type="button"
 				onclick={() => (showToken = !showToken)}
-				class="absolute top-1/2 right-2 -translate-y-1/2 rounded px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+				class="absolute top-1/2 right-2 -translate-y-1/2 rounded px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
 			>
 				{showToken ? 'Hide' : 'Show'}
 			</button>

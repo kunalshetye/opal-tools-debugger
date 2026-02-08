@@ -59,7 +59,7 @@
 					<button
 						type="button"
 						onclick={() => removeRow(i)}
-						class="shrink-0 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-700"
+						class="shrink-0 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-red-400"
 						aria-label="Remove header"
 					>
 						<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

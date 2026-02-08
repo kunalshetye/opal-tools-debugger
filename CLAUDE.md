@@ -7,6 +7,7 @@ Instructions for Claude Code when working on this project.
 1. **Always use `bun`** as the package manager. Never use `yarn` or `npm`, even if other project-level CLAUDE.md files say otherwise. This project uses `bun` exclusively.
 2. **100% Client-Side Rendering (CSR) only.** This is a fully static SPA. Never introduce server-side rendering, server routes, server-side `load` functions, `+page.server.ts`, `+server.ts`, or any SSR logic. All code runs in the browser. `+layout.ts` enforces `ssr = false` and `prerender = false`.
 3. **Every new feature must have tests.** When implementing a new feature, utility, or store, write accompanying unit tests in a co-located `.test.ts` file. Features without tests are incomplete. Run `bun run test` to verify before considering work done.
+4. **All UI must support both light and dark themes.** Every component must include `dark:` variant classes for all color-related styles. Never add a color, background, or border class without its `dark:` counterpart. Use the existing Tailwind CSS 4 class-based dark mode system (`dark:` variants). Untested or missing dark mode styling is a bug.
 
 ## Project Overview
 

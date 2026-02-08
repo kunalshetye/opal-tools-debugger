@@ -102,7 +102,7 @@
 			<button
 				type="button"
 				onclick={copyCurl}
-				class="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+				class="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
 			>
 				{curlCopied ? 'Copied!' : 'cURL'}
 			</button>
@@ -112,7 +112,7 @@
 			<button
 				type="button"
 				onclick={() => (expanded = !expanded)}
-				class="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+				class="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
 			>
 				{expanded ? 'Hide' : 'Details'}
 			</button>

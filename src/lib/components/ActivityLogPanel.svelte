@@ -136,7 +136,7 @@
 				value={activityLogState.searchQuery}
 				oninput={handleSearchInput}
 				placeholder="Search..."
-				class="h-5 w-28 rounded border border-zinc-200 bg-white px-1.5 text-[11px] text-zinc-600 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+				class="h-5 w-28 rounded border border-zinc-200 bg-white px-1.5 text-[11px] text-zinc-600 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:placeholder-zinc-500"
 			/>
 
 			<span class="text-[10px] text-zinc-400 dark:text-zinc-500">
