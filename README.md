@@ -29,6 +29,7 @@ npx @kunalshetye/opal-tools-debugger \
 
 - **Discovery** — Connects to your Opal discovery endpoint and lists all available tools with their parameters, HTTP methods, and endpoints.
 - **Tool Execution** — Fill in parameters via auto-generated forms and execute tools directly. Responses show status, headers, body, and timing.
+- **Parameter Presets** — Save named parameter presets per tool, scoped by discovery endpoint. Load a preset to pre-fill the form, update it with new values, or delete it. Stored in IndexedDB for structured, high-capacity browser storage.
 - **Execution History** — Each tool keeps the last 10 execution results in localStorage so you can compare responses across runs.
 - **Connection History** — Recent connections are saved locally. One-click reconnect to any previous endpoint without retyping URLs and tokens.
 - **Connection Switcher** — Switch between discovery endpoints directly from the header dropdown without disconnecting first. The dropdown lists all connections from history and performs a seamless switch in place.
@@ -44,7 +45,7 @@ npx @kunalshetye/opal-tools-debugger \
 3. The client calls your discovery endpoint directly (CORS must be open) and renders the tool list.
 4. Tool execution sends requests from the browser to your Opal tool endpoints.
 
-All state (connection, tools, history, theme) lives in the browser's localStorage — nothing is stored server-side.
+All state (connection, tools, history, theme) lives in the browser's localStorage. Parameter presets use IndexedDB for structured storage. Nothing is stored server-side.
 
 ## Development
 
@@ -64,6 +65,7 @@ bun run test       # Run unit tests
 - [Svelte 5](https://svelte.dev/docs/svelte) runes (`$state`, `$derived`, `$effect`)
 - [Tailwind CSS 4](https://tailwindcss.com) with class-based dark mode (`@custom-variant dark`)
 - [Commander](https://github.com/tj/commander.js) for the CLI
+- [idb](https://github.com/jakearchibald/idb) for IndexedDB (parameter presets)
 - [Vitest](https://vitest.dev) + Playwright for testing
 
 ## Project Structure
@@ -79,20 +81,25 @@ src/
       ConnectionForm.svelte         # URL/token form + connection history
       Header.svelte                 # App header with connection switcher + theme toggle
       JsonViewer.svelte             # Collapsible JSON tree viewer
+      PresetBar.svelte              # Preset toolbar (save/load/update/delete)
       ResponseViewer.svelte         # Response display (status, headers, body, timing)
       ToolDetailPanel.svelte        # Tool detail — form + response side by side
       ToolForm.svelte               # Parameter form for tool execution
       ToolListItem.svelte           # Single tool item in sidebar list
       ToolSidebar.svelte            # Sidebar with search + tool list
+    db/
+      presets.ts                    # IndexedDB access layer for presets
     stores/
       connection.svelte.ts          # Connection state (URL, token, connected)
       history.svelte.ts             # Connection history (recent endpoints)
+      presets.svelte.ts             # Preset state + async IndexedDB persistence
       theme.svelte.ts               # Dark/light theme state + persistence
       tools.svelte.ts               # Tools state (functions list)
       ui.svelte.ts                  # UI state (selection, sidebar, execution results)
     types.ts                        # TypeScript interfaces
     utils/
       http-status.ts                # HTTP status code labels and colors
+      preset-merge.ts               # Merge preset values with tool parameters
   routes/
     +layout.svelte                  # App layout with header + theme init
     +page.svelte                    # Home — connection form

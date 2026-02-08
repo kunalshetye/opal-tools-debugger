@@ -23,6 +23,7 @@ bun run test
 - **Svelte 5** — uses runes (`$state`, `$derived`, `$effect`), NOT legacy stores or `let` bindings
 - **Tailwind CSS 4** — utility-first, configured via `@tailwindcss/vite` plugin, class-based dark mode via `@custom-variant dark`
 - **Commander** — CLI argument parsing in `bin/cli.js`
+- **idb** — IndexedDB wrapper for parameter presets
 - **TypeScript** throughout
 
 ## Architecture
@@ -40,11 +41,17 @@ All client state uses Svelte 5 `$state()` runes with localStorage persistence:
 - `tools.svelte.ts` — discovered tools list
 - `theme.svelte.ts` — dark/light mode preference
 - `ui.svelte.ts` — UI state (selected tool, sidebar, search, execution results per tool)
+- `presets.svelte.ts` — parameter presets per tool (persisted to IndexedDB, not localStorage)
 
-Pattern for stores:
+Pattern for localStorage stores:
 1. `loadFromStorage()` reads from localStorage (with `browser` guard)
 2. `$state(initial)` initializes reactive state
 3. Mutation functions update state and call `saveToStorage()`
+
+Pattern for the presets store (IndexedDB):
+1. `$state(initial)` initializes reactive state
+2. `loadPresets(discoveryUrl, toolName)` async-fetches from IndexedDB → updates `$state`
+3. Mutation functions (`addPreset`, `removePreset`, `overwritePreset`) do optimistic `$state` updates + async IndexedDB writes
 
 ### Dark/Light Theme
 
@@ -69,6 +76,17 @@ The header dropdown allows switching between discovery endpoints without disconn
 - Clicking an entry fetches discovery, connects, refreshes tools, clears selected tool — all in place
 - If not on `/tools`, navigates there after switching
 - Disconnect is at the bottom of the dropdown
+
+### Parameter Presets (IndexedDB)
+
+Tool parameter presets are stored in IndexedDB (`opal-debugger` database, `presets` object store) via the `idb` library:
+- Presets are scoped by `[discoveryUrl, toolName]` (compound index) so different endpoints have separate presets
+- `src/lib/db/presets.ts` — plain `.ts` data access layer (no runes): `getPresetsForTool()`, `savePreset()`, `deletePreset()`, `updatePreset()`
+- `src/lib/stores/presets.svelte.ts` — reactive `$state()` store with optimistic updates + async IndexedDB writes
+- `src/lib/utils/preset-merge.ts` — merges saved preset values with the current tool schema (handles type coercion, new params, removed params)
+- `src/lib/components/PresetBar.svelte` — compact toolbar with dropdown, Save (inline name input), Update, Delete buttons
+- `ToolForm.svelte` accepts `initialValues` and `onvalueschange` props to support preset loading and value tracking
+- `ToolDetailPanel.svelte` orchestrates preset loading, saving, and form population
 
 ## Key Files
 

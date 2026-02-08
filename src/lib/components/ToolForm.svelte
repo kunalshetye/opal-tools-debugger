@@ -5,25 +5,35 @@
 		parameters: OpalParameter[];
 		onexecute: (params: Record<string, unknown>) => void;
 		loading?: boolean;
+		initialValues?: Record<string, string | number | boolean> | null;
+		onvalueschange?: (values: Record<string, string | number | boolean>) => void;
 	}
 
-	let { parameters, onexecute, loading = false }: Props = $props();
+	let { parameters, onexecute, loading = false, initialValues = null, onvalueschange }: Props = $props();
 
 	let values: Record<string, string | number | boolean> = $state({});
 
-	// Initialize default values
+	// Reset values to fresh defaults when parameters change (tool switch)
 	$effect(() => {
 		const defaults: Record<string, string | number | boolean> = {};
 		for (const param of parameters) {
-			if (!(param.name in values)) {
-				if (param.type === 'boolean') defaults[param.name] = false;
-				else if (param.type === 'number') defaults[param.name] = 0;
-				else defaults[param.name] = '';
-			}
+			if (param.type === 'boolean') defaults[param.name] = false;
+			else if (param.type === 'number') defaults[param.name] = 0;
+			else defaults[param.name] = '';
 		}
-		if (Object.keys(defaults).length > 0) {
-			values = { ...defaults, ...values };
+		values = defaults;
+	});
+
+	// Apply initial values from presets
+	$effect(() => {
+		if (initialValues) {
+			values = { ...initialValues };
 		}
+	});
+
+	// Notify parent of value changes
+	$effect(() => {
+		onvalueschange?.({ ...values });
 	});
 
 	function isTextarea(param: OpalParameter): boolean {

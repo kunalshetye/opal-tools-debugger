@@ -25,3 +25,13 @@ export interface ToolExecutionResult {
 	requestSize?: number;
 	error?: string;
 }
+
+export interface ToolPreset {
+	id: string;
+	toolName: string;
+	discoveryUrl: string;
+	presetName: string;
+	values: Record<string, string | number | boolean>;
+	createdAt: string;
+	updatedAt: string;
+}

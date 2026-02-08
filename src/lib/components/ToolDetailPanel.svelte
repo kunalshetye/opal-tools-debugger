@@ -2,14 +2,20 @@
 	import { connectionState } from '$lib/stores/connection.svelte';
 	import { getToolByName } from '$lib/stores/tools.svelte';
 	import { uiState, getResultsForTool, addResultForTool, toggleSidebar } from '$lib/stores/ui.svelte';
+	import { presetsState, loadPresets, addPreset, removePreset, overwritePreset } from '$lib/stores/presets.svelte';
 	import { executeTool } from '$lib/api/executor';
+	import { mergePresetWithParameters } from '$lib/utils/preset-merge';
+	import type { ToolPreset } from '$lib/types';
 	import ToolForm from './ToolForm.svelte';
 	import ResponseViewer from './ResponseViewer.svelte';
+	import PresetBar from './PresetBar.svelte';
 
 	const tool = $derived(uiState.selectedToolName ? getToolByName(uiState.selectedToolName) : null);
 	const results = $derived(uiState.selectedToolName ? getResultsForTool(uiState.selectedToolName) : []);
 
 	let loading = $state(false);
+	let currentFormValues: Record<string, string | number | boolean> = $state({});
+	let initialValues: Record<string, string | number | boolean> | null = $state(null);
 
 	const methodColors: Record<string, string> = {
 		POST: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
@@ -17,6 +23,43 @@
 		PUT: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
 		DELETE: 'bg-red-500/20 text-red-600 dark:text-red-400'
 	};
+
+	// Load presets when selected tool changes
+	$effect(() => {
+		if (uiState.selectedToolName && connectionState.discoveryUrl) {
+			loadPresets(connectionState.discoveryUrl, uiState.selectedToolName);
+			initialValues = null;
+		}
+	});
+
+	function handleValuesChange(values: Record<string, string | number | boolean>) {
+		currentFormValues = values;
+	}
+
+	function handleLoadPreset(preset: ToolPreset) {
+		if (!tool) return;
+		presetsState.selectedPresetId = preset.id;
+		initialValues = mergePresetWithParameters(preset.values, tool.parameters);
+	}
+
+	async function handleSavePreset(name: string) {
+		if (!connectionState.discoveryUrl || !uiState.selectedToolName) return;
+		await addPreset(
+			connectionState.discoveryUrl,
+			uiState.selectedToolName,
+			name,
+			currentFormValues
+		);
+	}
+
+	async function handleUpdatePreset(preset: ToolPreset) {
+		await overwritePreset(preset.id, currentFormValues);
+	}
+
+	async function handleDeletePreset(preset: ToolPreset) {
+		await removePreset(preset.id);
+		initialValues = null;
+	}
 
 	async function handleExecute(params: Record<string, unknown>) {
 		if (!tool || !uiState.selectedToolName) return;
@@ -70,7 +113,22 @@
 					<h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
 						Parameters
 					</h3>
-					<ToolForm parameters={tool.parameters} onexecute={handleExecute} {loading} />
+					<PresetBar
+						presets={presetsState.presets}
+						loading={presetsState.loading}
+						selectedPresetId={presetsState.selectedPresetId}
+						onsave={handleSavePreset}
+						onload={handleLoadPreset}
+						onupdate={handleUpdatePreset}
+						ondelete={handleDeletePreset}
+					/>
+					<ToolForm
+						parameters={tool.parameters}
+						onexecute={handleExecute}
+						{loading}
+						{initialValues}
+						onvalueschange={handleValuesChange}
+					/>
 				</div>
 
 				<div>

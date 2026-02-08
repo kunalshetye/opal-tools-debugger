@@ -1,8 +1,25 @@
 import { browser } from '$app/environment';
 import type { ToolExecutionResult } from '$lib/types';
+import { connectionState } from './connection.svelte';
 
 const STORAGE_KEY_PREFIX = 'opal-debugger-history-';
 const MAX_RESULTS_PER_TOOL = 10;
+
+function hashString(str: string): string {
+	let hash = 5381;
+	for (let i = 0; i < str.length; i++) {
+		hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+	}
+	return (hash >>> 0).toString(36);
+}
+
+function storageKey(toolName: string): string {
+	const url = connectionState.discoveryUrl;
+	if (url) {
+		return `${STORAGE_KEY_PREFIX}${hashString(url)}-${toolName}`;
+	}
+	return `${STORAGE_KEY_PREFIX}${toolName}`;
+}
 
 interface UIState {
 	selectedToolName: string | null;
@@ -21,7 +38,7 @@ export const uiState: UIState = $state({
 function loadResultsForTool(toolName: string): ToolExecutionResult[] {
 	if (!browser) return [];
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY_PREFIX + toolName);
+		const stored = localStorage.getItem(storageKey(toolName));
 		if (stored) return JSON.parse(stored);
 	} catch {
 		// ignore
@@ -32,7 +49,7 @@ function loadResultsForTool(toolName: string): ToolExecutionResult[] {
 function saveResultsForTool(toolName: string, results: ToolExecutionResult[]) {
 	if (!browser) return;
 	localStorage.setItem(
-		STORAGE_KEY_PREFIX + toolName,
+		storageKey(toolName),
 		JSON.stringify(results.slice(0, MAX_RESULTS_PER_TOOL))
 	);
 }
