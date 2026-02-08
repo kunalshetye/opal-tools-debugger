@@ -7,6 +7,8 @@
 	import { fetchDiscovery } from '$lib/api/discovery';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { logInfo, logSuccess, logError } from '$lib/stores/activity-log.svelte';
+	import ActivityLogToggle from './ActivityLogToggle.svelte';
 
 	let dropdownOpen = $state(false);
 	let switching = $state(false);
@@ -18,6 +20,7 @@
 	);
 
 	function handleDisconnect() {
+		logInfo('connection', `Disconnected from ${connectionState.discoveryUrl}`);
 		dropdownOpen = false;
 		clearTools();
 		disconnect();
@@ -26,19 +29,22 @@
 
 	async function switchTo(entry: { discoveryUrl: string; bearerToken: string }) {
 		switching = true;
+		logInfo('connection', `Switching to ${entry.discoveryUrl}...`);
 		try {
 			setLoading();
 			const data = await fetchDiscovery(entry.discoveryUrl, entry.bearerToken || undefined);
 			clearSelection();
 			connect(entry.discoveryUrl, entry.bearerToken);
 			setTools(data.functions);
+			logSuccess('connection', `Switched to ${entry.discoveryUrl} (${data.functions.length} tools)`);
 
 			// If not already on tools page, navigate there
 			if (!$page.url.pathname.startsWith('/tools')) {
 				goto('/tools');
 			}
 		} catch (err) {
-			// If switch fails, stay on current connection
+			const msg = err instanceof Error ? err.message : 'Failed to switch connection';
+			logError('connection', `Failed to switch to ${entry.discoveryUrl}: ${msg}`);
 			console.error('Failed to switch connection:', err);
 		} finally {
 			switching = false;
@@ -138,6 +144,8 @@
 					{/if}
 				</div>
 			{/if}
+
+			<ActivityLogToggle />
 
 			<button
 				onclick={toggleTheme}

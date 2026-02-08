@@ -35,3 +35,15 @@ export interface ToolPreset {
 	createdAt: string;
 	updatedAt: string;
 }
+
+export type LogLevel = 'info' | 'success' | 'warning' | 'error';
+export type LogCategory = 'connection' | 'discovery' | 'execution' | 'app';
+
+export interface LogEntry {
+	id: string;
+	timestamp: number;
+	level: LogLevel;
+	category: LogCategory;
+	message: string;
+	details?: unknown;
+}

@@ -5,6 +5,7 @@
 	import { uiState, closeSidebar } from '$lib/stores/ui.svelte';
 	import { fetchDiscovery } from '$lib/api/discovery';
 	import { goto } from '$app/navigation';
+	import { logInfo, logSuccess, logError } from '$lib/stores/activity-log.svelte';
 	import ToolSidebar from '$lib/components/ToolSidebar.svelte';
 	import ToolDetailPanel from '$lib/components/ToolDetailPanel.svelte';
 
@@ -12,14 +13,17 @@
 
 	async function refreshDiscovery() {
 		refreshing = true;
+		logInfo('discovery', `Refreshing discovery from ${connectionState.discoveryUrl}...`);
 		try {
 			const data = await fetchDiscovery(
 				connectionState.discoveryUrl,
 				connectionState.bearerToken || undefined
 			);
 			setTools(data.functions);
-		} catch {
-			// silently fail on refresh
+			logSuccess('discovery', `Discovery refreshed (${data.functions.length} tools)`);
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : 'Failed to refresh';
+			logError('discovery', `Discovery refresh failed: ${msg}`);
 		} finally {
 			refreshing = false;
 		}
@@ -34,13 +38,17 @@
 		// Re-fetch tools from discovery if they're not in memory (e.g. after page refresh)
 		if (toolsState.functions.length === 0) {
 			setLoading();
+			logInfo('discovery', `Fetching tools from ${connectionState.discoveryUrl}...`);
 			try {
 				const data = await fetchDiscovery(
 					connectionState.discoveryUrl,
 					connectionState.bearerToken || undefined
 				);
 				setTools(data.functions);
-			} catch {
+				logSuccess('discovery', `Discovered ${data.functions.length} tools`);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : 'Discovery failed';
+				logError('discovery', `Discovery failed: ${msg}`);
 				clearTools();
 				disconnect();
 				goto('/');
@@ -53,7 +61,7 @@
 	<title>Tools - Opal Tools Debugger</title>
 </svelte:head>
 
-<div class="flex h-[calc(100vh-41px)]">
+<div class="flex h-full">
 	<!-- Sidebar: hidden on mobile unless open -->
 	<!-- Mobile overlay backdrop -->
 	{#if uiState.sidebarOpen}

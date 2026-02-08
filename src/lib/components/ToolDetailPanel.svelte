@@ -5,6 +5,7 @@
 	import { presetsState, loadPresets, addPreset, removePreset, overwritePreset } from '$lib/stores/presets.svelte';
 	import { executeTool } from '$lib/api/executor';
 	import { mergePresetWithParameters } from '$lib/utils/preset-merge';
+	import { logInfo, logSuccess, logWarning, logError } from '$lib/stores/activity-log.svelte';
 	import type { ToolPreset } from '$lib/types';
 	import ToolForm from './ToolForm.svelte';
 	import ResponseViewer from './ResponseViewer.svelte';
@@ -64,6 +65,7 @@
 	async function handleExecute(params: Record<string, unknown>) {
 		if (!tool || !uiState.selectedToolName) return;
 		loading = true;
+		logInfo('execution', `Executing ${tool.name} (${tool.http_method} ${tool.endpoint})...`, params);
 
 		const result = await executeTool(
 			connectionState.baseUrl,
@@ -73,6 +75,15 @@
 		);
 
 		addResultForTool(uiState.selectedToolName, result);
+
+		if (result.error) {
+			logError('execution', `${tool.name} failed: ${result.error}`, result);
+		} else if (result.status >= 400) {
+			logWarning('execution', `${tool.name} returned ${result.status} (${result.duration}ms)`, result);
+		} else {
+			logSuccess('execution', `${tool.name} returned ${result.status} (${result.duration}ms)`, result);
+		}
+
 		loading = false;
 	}
 </script>

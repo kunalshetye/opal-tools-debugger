@@ -4,6 +4,7 @@
 	import { setTools, setLoading, setError } from '$lib/stores/tools.svelte';
 	import { historyState, removeFromHistory } from '$lib/stores/history.svelte';
 	import { goto } from '$app/navigation';
+	import { logInfo, logSuccess, logError } from '$lib/stores/activity-log.svelte';
 
 	interface Props {
 		initialDiscoveryUrl?: string;
@@ -30,16 +31,19 @@
 		loading = true;
 		error = '';
 		setLoading();
+		logInfo('connection', `Connecting to ${discoveryUrl.trim()}...`);
 
 		try {
 			const data = await fetchDiscovery(discoveryUrl.trim(), bearerToken.trim() || undefined);
 			connect(discoveryUrl.trim(), bearerToken.trim());
 			setTools(data.functions);
+			logSuccess('connection', `Connected to ${discoveryUrl.trim()} (${data.functions.length} tools)`);
 			goto('/tools');
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Failed to connect';
 			error = msg;
 			setError(msg);
+			logError('connection', `Failed to connect to ${discoveryUrl.trim()}: ${msg}`);
 		} finally {
 			loading = false;
 		}
@@ -49,16 +53,19 @@
 		connectingIndex = index;
 		error = '';
 		setLoading();
+		logInfo('connection', `Connecting to ${entry.discoveryUrl} (from history)...`);
 
 		try {
 			const data = await fetchDiscovery(entry.discoveryUrl, entry.bearerToken || undefined);
 			connect(entry.discoveryUrl, entry.bearerToken);
 			setTools(data.functions);
+			logSuccess('connection', `Connected to ${entry.discoveryUrl} (${data.functions.length} tools)`);
 			goto('/tools');
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Failed to connect';
 			error = msg;
 			setError(msg);
+			logError('connection', `Failed to connect to ${entry.discoveryUrl}: ${msg}`);
 		} finally {
 			connectingIndex = -1;
 		}
