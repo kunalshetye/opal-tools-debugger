@@ -10,6 +10,7 @@
 	import { page } from '$app/stores';
 	import { onMount, onDestroy } from 'svelte';
 	import { logInfo, logSuccess, logError, logWarning } from '$lib/stores/activity-log.svelte';
+	import { isSandboxMode } from '$lib/sandbox/constants';
 	import ActivityLogToggle from './ActivityLogToggle.svelte';
 	import EnvironmentEditor from './EnvironmentEditor.svelte';
 
@@ -17,6 +18,8 @@
 	let switching = $state(false);
 	let envDropdownOpen = $state(false);
 	let editingEnvIndex: number | 'new' | null = $state(null);
+
+	const isSandbox = $derived(isSandboxMode(connectionState.discoveryUrl));
 
 	// Connection health
 	let healthStatus: 'healthy' | 'slow' | 'unreachable' | null = $state(null);
@@ -37,6 +40,10 @@
 
 	async function checkHealth() {
 		if (!connectionState.connected || !connectionState.discoveryUrl) return;
+		if (isSandbox) {
+			healthStatus = 'healthy';
+			return;
+		}
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 5000);
 		const start = performance.now();
@@ -191,13 +198,22 @@
 				<div class="relative" data-connection-dropdown>
 					<button
 						onclick={() => (dropdownOpen = !dropdownOpen)}
-						class="flex items-center gap-2 rounded-md border border-zinc-200 px-2.5 py-1 text-xs transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 {dropdownOpen ? 'bg-zinc-50 dark:bg-zinc-800' : ''}"
+						class="flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs transition hover:bg-zinc-50 dark:hover:bg-zinc-800 {isSandbox ? 'border-amber-300 dark:border-amber-600' : 'border-zinc-200 dark:border-zinc-700'} {dropdownOpen ? 'bg-zinc-50 dark:bg-zinc-800' : ''}"
 						disabled={switching}
 					>
 						<span class="h-1.5 w-1.5 shrink-0 rounded-full {healthDotColor()}"></span>
-						<span class="max-w-48 truncate text-zinc-600 dark:text-zinc-400">
-							{formatUrl(connectionState.discoveryUrl)}
-						</span>
+						{#if isSandbox}
+							<span class="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+								<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+								</svg>
+								Sandbox
+							</span>
+						{:else}
+							<span class="max-w-48 truncate text-zinc-600 dark:text-zinc-400">
+								{formatUrl(connectionState.discoveryUrl)}
+							</span>
+						{/if}
 						<svg class="h-3 w-3 shrink-0 text-zinc-400 transition-transform {dropdownOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
 						</svg>
@@ -254,7 +270,7 @@
 									<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 										<path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
 									</svg>
-									Disconnect
+									{isSandbox ? 'Exit Sandbox' : 'Disconnect'}
 								</button>
 							</div>
 						</div>

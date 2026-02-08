@@ -6,12 +6,20 @@
 	import { fetchDiscovery } from '$lib/api/discovery';
 	import { goto } from '$app/navigation';
 	import { logInfo, logSuccess, logError } from '$lib/stores/activity-log.svelte';
+	import { isSandboxMode } from '$lib/sandbox/constants';
+	import { SANDBOX_TOOLS } from '$lib/sandbox/mock-tools';
 	import ToolSidebar from '$lib/components/ToolSidebar.svelte';
 	import ToolDetailPanel from '$lib/components/ToolDetailPanel.svelte';
 
 	let refreshing = $state(false);
 
 	async function refreshDiscovery() {
+		if (isSandboxMode(connectionState.discoveryUrl)) {
+			setTools(SANDBOX_TOOLS);
+			logSuccess('discovery', `Sandbox tools reloaded (${SANDBOX_TOOLS.length} tools)`);
+			return;
+		}
+
 		refreshing = true;
 		logInfo('discovery', `Refreshing discovery from ${connectionState.discoveryUrl}...`);
 		try {
@@ -37,6 +45,12 @@
 
 		// Re-fetch tools from discovery if they're not in memory (e.g. after page refresh)
 		if (toolsState.functions.length === 0) {
+			if (isSandboxMode(connectionState.discoveryUrl)) {
+				setTools(SANDBOX_TOOLS);
+				logInfo('discovery', `Sandbox mode restored (${SANDBOX_TOOLS.length} tools)`);
+				return;
+			}
+
 			setLoading();
 			logInfo('discovery', `Fetching tools from ${connectionState.discoveryUrl}...`);
 			try {

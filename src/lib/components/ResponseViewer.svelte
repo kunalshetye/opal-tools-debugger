@@ -2,7 +2,9 @@
 	import type { ToolExecutionResult } from '$lib/types';
 	import { getStatusInfo } from '$lib/utils/http-status';
 	import { generateCurlFromResult } from '$lib/utils/curl-export';
+	import { isAbdResponse } from '$lib/utils/abd-detect';
 	import JsonViewer from './JsonViewer.svelte';
+	import AbdDocumentView from './AbdDocumentView.svelte';
 
 	interface Props {
 		result: ToolExecutionResult;
@@ -14,6 +16,16 @@
 	let activeTab: 'body' | 'headers' | 'timing' = $state('body');
 	let copied = $state(false);
 	let curlCopied = $state(false);
+	let bodyViewMode: 'rendered' | 'raw' = $state('rendered');
+
+	const abdDetected = $derived(isAbdResponse(result.body, result.headers));
+
+	$effect(() => {
+		// Reset to rendered view when result changes
+		if (abdDetected) {
+			bodyViewMode = 'rendered';
+		}
+	});
 
 	const statusInfo = $derived(getStatusInfo(result.status, result.error));
 
@@ -118,13 +130,34 @@
 	<div class="p-4">
 		{#if activeTab === 'body'}
 			<div class="relative">
+				{#if abdDetected}
+					<!-- ABD sub-tab toggle -->
+					<div class="mb-3 flex items-center gap-1 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-700" style="width: fit-content;">
+						<button
+							onclick={() => (bodyViewMode = 'rendered')}
+							class="rounded px-3 py-1 text-xs font-medium transition-colors {bodyViewMode === 'rendered' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-600 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}"
+						>
+							Rendered
+						</button>
+						<button
+							onclick={() => (bodyViewMode = 'raw')}
+							class="rounded px-3 py-1 text-xs font-medium transition-colors {bodyViewMode === 'raw' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-600 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}"
+						>
+							Raw JSON
+						</button>
+					</div>
+				{/if}
 				<button
 					onclick={copyBody}
 					class="absolute top-2 right-2 z-10 rounded border border-zinc-300 bg-zinc-100 px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600 dark:hover:text-zinc-200"
 				>
 					{copied ? 'Copied!' : 'Copy'}
 				</button>
-				{#if isJsonBody}
+				{#if abdDetected && bodyViewMode === 'rendered'}
+					<div class="max-h-[32rem] overflow-auto rounded-md bg-zinc-50 p-4 dark:bg-zinc-900">
+						<AbdDocumentView response={result.body as Record<string, unknown>} />
+					</div>
+				{:else if isJsonBody}
 					<div class="max-h-96 overflow-auto rounded-md bg-zinc-50 p-4 font-mono text-sm leading-relaxed dark:bg-zinc-900">
 						<JsonViewer data={result.body} />
 					</div>

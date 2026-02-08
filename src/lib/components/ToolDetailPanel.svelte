@@ -8,6 +8,8 @@
 	import { logInfo, logSuccess, logWarning, logError } from '$lib/stores/activity-log.svelte';
 	import { environmentsState } from '$lib/stores/environments.svelte';
 	import { resolveAllTemplates } from '$lib/utils/template';
+	import { isSandboxMode } from '$lib/sandbox/constants';
+	import { executeSandboxTool } from '$lib/sandbox/mock-executor';
 	import type { ToolPreset, ToolExecutionResult } from '$lib/types';
 	import ToolForm from './ToolForm.svelte';
 	import ResponseViewer from './ResponseViewer.svelte';
@@ -117,15 +119,20 @@
 
 		logInfo('execution', `Executing ${tool.name} (${tool.http_method} ${tool.endpoint})...`, resolvedParams, tool.name);
 
-		const result = await executeTool(
-			connectionState.baseUrl,
-			tool.endpoint,
-			resolvedParams,
-			connectionState.bearerToken || undefined,
-			tool.http_method,
-			controller.signal,
-			getCustomHeadersObj()
-		);
+		let result: ToolExecutionResult;
+		if (isSandboxMode(connectionState.discoveryUrl)) {
+			result = await executeSandboxTool(tool.name, resolvedParams, controller.signal);
+		} else {
+			result = await executeTool(
+				connectionState.baseUrl,
+				tool.endpoint,
+				resolvedParams,
+				connectionState.bearerToken || undefined,
+				tool.http_method,
+				controller.signal,
+				getCustomHeadersObj()
+			);
+		}
 
 		clearTimeout(timeout);
 		abortController = null;

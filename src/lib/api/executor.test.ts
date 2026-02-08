@@ -45,6 +45,16 @@ describe('executeTool', () => {
 		expect(result.error).toBeUndefined();
 	});
 
+	it('parses +json media types (e.g. application/vnd.opal.block+json) as JSON objects', async () => {
+		const abdPayload = { content: [{ type: 'paragraph', children: [{ text: 'Hello' }] }] };
+		mockFetch.mockResolvedValue(makeResponse(abdPayload, { contentType: 'application/vnd.opal.block+json' }));
+
+		const result = await executeTool('https://api.example.com', '/run', {});
+
+		expect(result.body).toEqual(abdPayload);
+		expect(typeof result.body).toBe('object');
+	});
+
 	it('returns string body for non-JSON content-type', async () => {
 		mockFetch.mockResolvedValue(makeResponse('plain text response', { contentType: 'text/plain' }));
 

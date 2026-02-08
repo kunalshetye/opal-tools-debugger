@@ -55,7 +55,7 @@ export async function executeTool(
 
 		let body: unknown;
 		const contentType = response.headers.get('content-type') || '';
-		if (contentType.includes('application/json')) {
+		if (contentType.includes('json')) {
 			body = await response.json();
 		} else {
 			body = await response.text();

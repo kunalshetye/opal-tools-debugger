@@ -1,6 +1,25 @@
 {
 	"name": "@kunalshetye/otd",
 	"version": "0.0.2",
+	"description": "OTD (Opal Tools Debugger) — test and execute Opal tools locally without deploying",
+	"author": "Kunal Shetye",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/kunalshetye/opal-tools-debugger.git"
+	},
+	"homepage": "https://github.com/kunalshetye/opal-tools-debugger#readme",
+	"bugs": {
+		"url": "https://github.com/kunalshetye/opal-tools-debugger/issues"
+	},
+	"keywords": [
+		"opal",
+		"tools",
+		"debugger",
+		"api",
+		"testing",
+		"developer-tools"
+	],
 	"type": "module",
 	"bin": {
 		"otd": "./bin/cli.js"
@@ -20,7 +39,8 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
 		"commander": "^13.0.0",

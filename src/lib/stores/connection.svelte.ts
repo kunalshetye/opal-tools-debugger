@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import { addToHistory } from './history.svelte';
+import { SANDBOX_URL } from '$lib/sandbox/constants';
 
 const STORAGE_KEY = 'opal-debugger-connection';
 
@@ -47,6 +48,15 @@ export function connect(discoveryUrl: string, bearerToken: string) {
 	connectionState.connected = true;
 	saveToStorage(connectionState);
 	addToHistory(discoveryUrl, bearerToken);
+}
+
+export function connectSandbox() {
+	connectionState.discoveryUrl = SANDBOX_URL;
+	connectionState.bearerToken = '';
+	connectionState.baseUrl = SANDBOX_URL;
+	connectionState.connected = true;
+	saveToStorage(connectionState);
+	// Intentionally not calling addToHistory() — sandbox should not appear in history
 }
 
 export function disconnect() {
