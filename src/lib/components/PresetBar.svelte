@@ -1,5 +1,9 @@
 <script lang="ts">
 	import type { ToolPreset } from '$lib/types';
+	import { exportPresets, importPresets } from '$lib/utils/preset-io';
+	import { connectionState } from '$lib/stores/connection.svelte';
+	import { uiState } from '$lib/stores/ui.svelte';
+	import BulkExecutor from './BulkExecutor.svelte';
 
 	interface Props {
 		presets: ToolPreset[];
@@ -9,12 +13,14 @@
 		onload: (preset: ToolPreset) => void;
 		onupdate: (preset: ToolPreset) => void;
 		ondelete: (preset: ToolPreset) => void;
+		onbulkexecute?: (presets: ToolPreset[]) => void;
 	}
 
-	let { presets, loading, selectedPresetId, onsave, onload, onupdate, ondelete }: Props = $props();
+	let { presets, loading, selectedPresetId, onsave, onload, onupdate, ondelete, onbulkexecute }: Props = $props();
 
 	let saving = $state(false);
 	let presetName = $state('');
+	let fileInput: HTMLInputElement | undefined = $state();
 
 	const selectedPreset = $derived(
 		selectedPresetId ? presets.find((p) => p.id === selectedPresetId) ?? null : null
@@ -49,7 +55,39 @@
 		if (e.key === 'Enter') handleConfirmSave();
 		else if (e.key === 'Escape') handleCancelSave();
 	}
+
+	function handleExport() {
+		if (presets.length === 0) return;
+		exportPresets(presets, uiState.selectedToolName ?? 'tool');
+	}
+
+	function handleImportClick() {
+		fileInput?.click();
+	}
+
+	async function handleFileSelected(e: Event) {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file || !connectionState.discoveryUrl || !uiState.selectedToolName) return;
+		try {
+			await importPresets(file, connectionState.discoveryUrl, uiState.selectedToolName, presets);
+		} catch {
+			// ignore invalid files
+		}
+		if (fileInput) fileInput.value = '';
+	}
+
+	function handleBulkExecute(selectedPresets: ToolPreset[]) {
+		onbulkexecute?.(selectedPresets);
+	}
 </script>
+
+<input
+	type="file"
+	accept=".json"
+	class="hidden"
+	bind:this={fileInput}
+	onchange={handleFileSelected}
+/>
 
 <div class="mb-3 flex flex-wrap items-center gap-2">
 	{#if loading}
@@ -112,6 +150,32 @@
 			>
 				Delete
 			</button>
+		{/if}
+
+		{#if presets.length > 0}
+			<button
+				onclick={handleExport}
+				class="h-7 rounded border border-zinc-300 p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+				title="Export presets"
+			>
+				<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+				</svg>
+			</button>
+		{/if}
+
+		<button
+			onclick={handleImportClick}
+			class="h-7 rounded border border-zinc-300 p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+			title="Import presets"
+		>
+			<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+			</svg>
+		</button>
+
+		{#if onbulkexecute}
+			<BulkExecutor {presets} onexecute={handleBulkExecute} />
 		{/if}
 	{/if}
 </div>

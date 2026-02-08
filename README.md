@@ -34,16 +34,56 @@ npx @kunalshetye/otd \
 
 ## Features
 
+### Core
+
 - **Discovery** — Connects to your Opal discovery endpoint and lists all available tools with their parameters, HTTP methods, and endpoints.
+- **HTTP Method Support** — Executor respects `http_method` from discovery. GET/DELETE use query params; POST/PUT/PATCH use JSON body.
 - **Tool Execution** — Fill in parameters via auto-generated forms and execute tools directly. Responses show status, headers, body, and timing.
+- **Request Metadata** — Execution results store `requestParams`, `requestUrl`, `requestMethod`, and `requestHeaders` for full request introspection.
+- **Request Timeout + Cancel** — 30-second timeout with AbortController. A cancel button is shown during execution.
+- **Custom Request Headers** — Collapsible key-value editor below parameters. Custom headers merge with defaults and are saved with presets.
+- **Bulk Execution** — Select multiple presets and run them sequentially. Shows results per preset.
+
+### Presets & Environments
+
 - **Parameter Presets** — Save named parameter presets per tool, scoped by discovery endpoint. Load a preset to pre-fill the form, update it with new values, or delete it. Stored in IndexedDB for structured, high-capacity browser storage.
+- **Preset Export/Import** — Export presets as JSON, import from file. Deduplicates by name on import.
+- **Environment Variables / Templating** — Named environments with key-value variables. Use `{{varName}}` in parameters; values are resolved before execution. Environment selector in the header.
+
+### Response & Comparison
+
 - **Execution History** — Each tool keeps the last 10 execution results in localStorage so you can compare responses across runs.
+- **Response Diff** — Compare toggle when 2+ results exist. Side-by-side diff with color-coded added/removed/changed lines.
+- **Quick Replay** — Replay button in the response status bar re-executes with the same parameters.
+- **cURL Export** — Copy any request as a cURL command from the response status bar or activity log entries.
+- **JSON Viewer** — Collapsible, syntax-highlighted JSON tree for response bodies.
+
+### Activity Log
+
+- **Activity Log** — Collapsible panel that records all tool executions, connections, and errors in a timestamped log.
+- **Activity Log Search** — Text search in the activity log toolbar filters entries by message content.
+- **Activity Log Export + Entry Navigation** — Export filtered log as JSON. Tool names in log entries are clickable, navigating to that tool.
+- **Activity Log Error Badge** — Red badge with error count when the panel is closed. Error entries get a red left border and tint.
+
+### Navigation & UI
+
 - **Connection History** — Recent connections are saved locally. One-click reconnect to any previous endpoint without retyping URLs and tokens.
 - **Connection Switcher** — Switch between discovery endpoints directly from the header dropdown without disconnecting first. The dropdown lists all connections from history and performs a seamless switch in place.
+- **Connection Health Indicator** — Periodic HEAD request every 60 seconds. Green/amber/red dot in the header. State changes are logged.
+- **Favorites / Pinned Tools** — Star icon on tool list items. Pinned tools are shown at the top of the sidebar in a separate section.
 - **Dark/Light Theme** — Toggle between dark and light mode via the header button. Defaults to your OS preference and persists across sessions.
 - **Search** — Filter tools by name or description in the sidebar.
-- **JSON Viewer** — Collapsible, syntax-highlighted JSON tree for response bodies.
+- **Keyboard Shortcuts** — Cmd/Ctrl+Enter executes, Cmd/Ctrl+K focuses search, Escape closes panels, and more. See the [Keyboard Shortcuts](#keyboard-shortcuts) table below.
 - **CLI Pre-fill** — Pass `--discovery-url` and `--bearer-token` via CLI to skip manual entry.
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd/Ctrl + Enter` | Execute current tool |
+| `Cmd/Ctrl + K` | Focus sidebar search |
+| `Escape` | Close open panels |
+| `Cmd/Ctrl + Shift + L` | Toggle activity log |
 
 ## Integrating Into Your Opal Tools Project
 
@@ -229,21 +269,30 @@ src/
   lib/
     api/
       discovery.ts                  # Fetch discovery endpoint
-      executor.ts                   # Execute tool requests
+      executor.ts                   # Execute tool requests (supports all HTTP methods, timeout, cancel)
     components/
+      ActivityLogEntry.svelte       # Single entry in the activity log
+      ActivityLogPanel.svelte       # Collapsible activity log panel
+      ActivityLogToggle.svelte      # Toggle button with error badge for the activity log
+      BulkExecutor.svelte           # Multi-preset sequential execution UI
       ConnectionForm.svelte         # URL/token form + connection history
-      Header.svelte                 # App header with connection switcher + theme toggle
+      Header.svelte                 # App header with connection switcher, env selector, health indicator
+      HeadersEditor.svelte          # Key-value editor for custom request headers
       JsonViewer.svelte             # Collapsible JSON tree viewer
-      PresetBar.svelte              # Preset toolbar (save/load/update/delete)
-      ResponseViewer.svelte         # Response display (status, headers, body, timing)
+      PresetBar.svelte              # Preset toolbar (save/load/update/delete/export/import)
+      ResponseDiff.svelte           # Side-by-side response comparison with color-coded diff
+      ResponseViewer.svelte         # Response display (status, headers, body, timing, cURL export, replay)
       ToolDetailPanel.svelte        # Tool detail — form + response side by side
       ToolForm.svelte               # Parameter form for tool execution
-      ToolListItem.svelte           # Single tool item in sidebar list
-      ToolSidebar.svelte            # Sidebar with search + tool list
+      ToolListItem.svelte           # Single tool item in sidebar list (with favorite star)
+      ToolSidebar.svelte            # Sidebar with search + tool list + pinned section
     db/
       presets.ts                    # IndexedDB access layer for presets
     stores/
-      connection.svelte.ts          # Connection state (URL, token, connected)
+      activity-log.svelte.ts        # Activity log state (entries, search, error count)
+      connection.svelte.ts          # Connection state (URL, token, connected, health)
+      environments.svelte.ts        # Named environments with key-value variables
+      favorites.svelte.ts           # Pinned/favorite tools state + persistence
       history.svelte.ts             # Connection history (recent endpoints)
       presets.svelte.ts             # Preset state + async IndexedDB persistence
       theme.svelte.ts               # Dark/light theme state + persistence
@@ -251,8 +300,12 @@ src/
       ui.svelte.ts                  # UI state (selection, sidebar, execution results)
     types.ts                        # TypeScript interfaces
     utils/
+      curl-export.ts                # Generate cURL commands from request metadata
       http-status.ts                # HTTP status code labels and colors
+      json-diff.ts                  # JSON diff algorithm for response comparison
+      preset-io.ts                  # Preset export/import (JSON file I/O, deduplication)
       preset-merge.ts               # Merge preset values with tool parameters
+      template.ts                   # {{varName}} template resolution with environment variables
   routes/
     +layout.svelte                  # App layout with header + theme init
     +layout.ts                      # SPA config (ssr=false, prerender=false)

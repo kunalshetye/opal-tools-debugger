@@ -78,6 +78,28 @@ export function addResultForTool(toolName: string, result: ToolExecutionResult) 
 	saveResultsForTool(toolName, updated);
 }
 
+export function clearResultsForTool(toolName: string) {
+	uiState.results[toolName] = [];
+	if (browser) {
+		localStorage.removeItem(storageKey(toolName));
+	}
+}
+
+export function clearAllResults() {
+	uiState.results = {};
+	if (!browser) return;
+	const keysToRemove: string[] = [];
+	for (let i = 0; i < localStorage.length; i++) {
+		const key = localStorage.key(i);
+		if (key?.startsWith(STORAGE_KEY_PREFIX)) {
+			keysToRemove.push(key);
+		}
+	}
+	for (const key of keysToRemove) {
+		localStorage.removeItem(key);
+	}
+}
+
 export function toggleSidebar() {
 	uiState.sidebarOpen = !uiState.sidebarOpen;
 }

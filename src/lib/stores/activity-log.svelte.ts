@@ -34,19 +34,21 @@ let panelHeight: number = $state(initialPrefs.panelHeight);
 let autoScroll: boolean = $state(true);
 let filterLevel: LogLevel | 'all' = $state('all');
 let filterCategory: LogCategory | 'all' = $state('all');
+let searchQuery: string = $state('');
 
 function generateId(): string {
 	return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function addEntry(level: LogLevel, category: LogCategory, message: string, details?: unknown) {
+function addEntry(level: LogLevel, category: LogCategory, message: string, details?: unknown, toolName?: string) {
 	const entry: LogEntry = {
 		id: generateId(),
 		timestamp: Date.now(),
 		level,
 		category,
 		message,
-		details
+		details,
+		toolName
 	};
 	entries = [entry, ...entries.slice(0, MAX_ENTRIES - 1)];
 }
@@ -57,23 +59,24 @@ export const activityLogState = {
 	get panelHeight() { return panelHeight; },
 	get autoScroll() { return autoScroll; },
 	get filterLevel() { return filterLevel; },
-	get filterCategory() { return filterCategory; }
+	get filterCategory() { return filterCategory; },
+	get searchQuery() { return searchQuery; }
 };
 
-export function logInfo(category: LogCategory, message: string, details?: unknown) {
-	addEntry('info', category, message, details);
+export function logInfo(category: LogCategory, message: string, details?: unknown, toolName?: string) {
+	addEntry('info', category, message, details, toolName);
 }
 
-export function logSuccess(category: LogCategory, message: string, details?: unknown) {
-	addEntry('success', category, message, details);
+export function logSuccess(category: LogCategory, message: string, details?: unknown, toolName?: string) {
+	addEntry('success', category, message, details, toolName);
 }
 
-export function logWarning(category: LogCategory, message: string, details?: unknown) {
-	addEntry('warning', category, message, details);
+export function logWarning(category: LogCategory, message: string, details?: unknown, toolName?: string) {
+	addEntry('warning', category, message, details, toolName);
 }
 
-export function logError(category: LogCategory, message: string, details?: unknown) {
-	addEntry('error', category, message, details);
+export function logError(category: LogCategory, message: string, details?: unknown, toolName?: string) {
+	addEntry('error', category, message, details, toolName);
 }
 
 export function clearLog() {
@@ -113,6 +116,10 @@ export function setFilterCategory(category: LogCategory | 'all') {
 	filterCategory = category;
 }
 
+export function setSearchQuery(q: string) {
+	searchQuery = q;
+}
+
 export function getFilteredEntries(): LogEntry[] {
 	let filtered = entries;
 	if (filterLevel !== 'all') {
@@ -121,5 +128,13 @@ export function getFilteredEntries(): LogEntry[] {
 	if (filterCategory !== 'all') {
 		filtered = filtered.filter((e) => e.category === filterCategory);
 	}
+	if (searchQuery.trim()) {
+		const q = searchQuery.toLowerCase();
+		filtered = filtered.filter((e) => e.message.toLowerCase().includes(q));
+	}
 	return filtered;
+}
+
+export function getErrorCount(): number {
+	return entries.filter((e) => e.level === 'error').length;
 }

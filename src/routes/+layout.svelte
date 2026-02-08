@@ -6,7 +6,8 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { initTheme } from '$lib/stores/theme.svelte';
-	import { togglePanel } from '$lib/stores/activity-log.svelte';
+	import { activityLogState, togglePanel, closePanel } from '$lib/stores/activity-log.svelte';
+	import { closeSidebar, uiState } from '$lib/stores/ui.svelte';
 
 	let { children } = $props();
 
@@ -17,9 +18,40 @@
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
-		if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'L') {
+		const mod = e.ctrlKey || e.metaKey;
+
+		// Cmd/Ctrl+Shift+L: Toggle activity log
+		if (mod && e.shiftKey && e.key === 'L') {
 			e.preventDefault();
 			togglePanel();
+			return;
+		}
+
+		// Cmd/Ctrl+Enter: Execute current tool
+		if (mod && e.key === 'Enter' && isToolsPage) {
+			e.preventDefault();
+			document.querySelector<HTMLFormElement>('form')?.requestSubmit();
+			return;
+		}
+
+		// Cmd/Ctrl+K: Focus sidebar search
+		if (mod && e.key === 'k' && isToolsPage) {
+			e.preventDefault();
+			const input = document.querySelector<HTMLInputElement>('[data-sidebar-search]');
+			input?.focus();
+			return;
+		}
+
+		// Escape: Close activity log, then sidebar
+		if (e.key === 'Escape') {
+			if (activityLogState.panelOpen) {
+				closePanel();
+				return;
+			}
+			if (uiState.sidebarOpen) {
+				closeSidebar();
+				return;
+			}
 		}
 	}
 </script>

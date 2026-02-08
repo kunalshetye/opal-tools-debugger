@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { activityLogState, togglePanel } from '$lib/stores/activity-log.svelte';
+	import { activityLogState, togglePanel, getErrorCount } from '$lib/stores/activity-log.svelte';
 
 	const entryCount = $derived(activityLogState.entries.length);
+	const errorCount = $derived(getErrorCount());
+	const hasErrors = $derived(errorCount > 0);
 </script>
 
 <button
@@ -15,8 +17,14 @@
 	</svg>
 
 	{#if !activityLogState.panelOpen && entryCount > 0}
-		<span class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-500 px-1 text-[9px] font-bold text-white">
-			{entryCount > 99 ? '99+' : entryCount}
-		</span>
+		{#if hasErrors}
+			<span class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+				{errorCount > 99 ? '99+' : errorCount}
+			</span>
+		{:else}
+			<span class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-500 px-1 text-[9px] font-bold text-white">
+				{entryCount > 99 ? '99+' : entryCount}
+			</span>
+		{/if}
 	{/if}
 </button>

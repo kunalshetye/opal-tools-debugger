@@ -49,12 +49,14 @@ export async function deletePreset(id: string): Promise<void> {
 
 export async function updatePreset(
 	id: string,
-	values: Record<string, string | number | boolean>
+	values: Record<string, string | number | boolean>,
+	headers?: Record<string, string>
 ): Promise<void> {
 	const db = await getDB();
 	const existing = await db.get(STORE_NAME, id);
 	if (!existing) return;
 	existing.values = values;
+	existing.headers = headers;
 	existing.updatedAt = new Date().toISOString();
 	await db.put(STORE_NAME, existing);
 }

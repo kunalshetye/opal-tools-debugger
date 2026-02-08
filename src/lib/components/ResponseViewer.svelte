@@ -1,16 +1,19 @@
 <script lang="ts">
 	import type { ToolExecutionResult } from '$lib/types';
 	import { getStatusInfo } from '$lib/utils/http-status';
+	import { generateCurlFromResult } from '$lib/utils/curl-export';
 	import JsonViewer from './JsonViewer.svelte';
 
 	interface Props {
 		result: ToolExecutionResult;
+		onreplay?: (params: Record<string, unknown>) => void;
 	}
 
-	let { result }: Props = $props();
+	let { result, onreplay }: Props = $props();
 
 	let activeTab: 'body' | 'headers' | 'timing' = $state('body');
 	let copied = $state(false);
+	let curlCopied = $state(false);
 
 	const statusInfo = $derived(getStatusInfo(result.status, result.error));
 
@@ -28,10 +31,25 @@
 		return `${(bytes / 1024).toFixed(1)} KB`;
 	});
 
+	const curlCommand = $derived(generateCurlFromResult(result));
+
 	async function copyBody() {
 		await navigator.clipboard.writeText(formattedBody);
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
+	}
+
+	async function copyCurl() {
+		if (!curlCommand) return;
+		await navigator.clipboard.writeText(curlCommand);
+		curlCopied = true;
+		setTimeout(() => (curlCopied = false), 2000);
+	}
+
+	function handleReplay() {
+		if (result.requestParams && onreplay) {
+			onreplay(result.requestParams);
+		}
 	}
 </script>
 
@@ -52,6 +70,26 @@
 		{#if result.error}
 			<span class="ml-auto text-xs text-white/80">{result.error}</span>
 		{/if}
+		<div class="ml-auto flex items-center gap-1.5">
+			{#if result.requestParams && onreplay}
+				<button
+					onclick={handleReplay}
+					class="rounded px-2 py-0.5 text-xs font-medium text-white/90 hover:bg-white/20"
+					title="Replay with same parameters"
+				>
+					Replay
+				</button>
+			{/if}
+			{#if curlCommand}
+				<button
+					onclick={copyCurl}
+					class="rounded px-2 py-0.5 text-xs font-medium text-white/90 hover:bg-white/20"
+					title="Copy as cURL"
+				>
+					{curlCopied ? 'Copied!' : 'cURL'}
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Tabs -->

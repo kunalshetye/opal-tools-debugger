@@ -4,6 +4,7 @@
 		getFilteredEntries,
 		setFilterLevel,
 		setFilterCategory,
+		setSearchQuery,
 		clearLog,
 		closePanel,
 		setPanelHeight,
@@ -68,6 +69,21 @@
 	function handleCategoryChange(e: Event) {
 		setFilterCategory((e.target as HTMLSelectElement).value as LogCategory | 'all');
 	}
+
+	function handleSearchInput(e: Event) {
+		setSearchQuery((e.target as HTMLInputElement).value);
+	}
+
+	function exportLog() {
+		const data = JSON.stringify(filteredEntries, null, 2);
+		const blob = new Blob([data], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'otd-activity-log.json';
+		a.click();
+		URL.revokeObjectURL(url);
+	}
 </script>
 
 {#if activityLogState.panelOpen}
@@ -115,6 +131,14 @@
 				<option value="error">Error</option>
 			</select>
 
+			<input
+				type="text"
+				value={activityLogState.searchQuery}
+				oninput={handleSearchInput}
+				placeholder="Search..."
+				class="h-5 w-28 rounded border border-zinc-200 bg-white px-1.5 text-[11px] text-zinc-600 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+			/>
+
 			<span class="text-[10px] text-zinc-400 dark:text-zinc-500">
 				{filteredEntries.length} / {activityLogState.entries.length}
 			</span>
@@ -128,6 +152,15 @@
 				title="Auto-scroll to latest"
 			>
 				Auto-scroll
+			</button>
+
+			<button
+				type="button"
+				onclick={exportLog}
+				class="rounded px-1.5 py-0.5 text-[11px] text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+				title="Export log as JSON"
+			>
+				Export
 			</button>
 
 			<button

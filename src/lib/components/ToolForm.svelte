@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { OpalParameter } from '$lib/types';
+	import { hasTemplateTokens } from '$lib/utils/template';
 
 	interface Props {
 		parameters: OpalParameter[];
@@ -7,11 +8,13 @@
 		loading?: boolean;
 		initialValues?: Record<string, string | number | boolean> | null;
 		onvalueschange?: (values: Record<string, string | number | boolean>) => void;
+		oncancel?: () => void;
 	}
 
-	let { parameters, onexecute, loading = false, initialValues = null, onvalueschange }: Props = $props();
+	let { parameters, onexecute, loading = false, initialValues = null, onvalueschange, oncancel }: Props = $props();
 
 	let values: Record<string, string | number | boolean> = $state({});
+	let formEl: HTMLFormElement | undefined = $state();
 
 	// Reset values to fresh defaults when parameters change (tool switch)
 	$effect(() => {
@@ -65,9 +68,13 @@
 
 		onexecute(params);
 	}
+
+	export function triggerExecute() {
+		formEl?.requestSubmit();
+	}
 </script>
 
-<form onsubmit={handleSubmit} class="space-y-4">
+<form bind:this={formEl} onsubmit={handleSubmit} class="space-y-4">
 	{#each parameters as param (param.name)}
 		<div>
 			<label for="param-{param.name}" class="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -95,21 +102,35 @@
 					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
 				/>
 			{:else if isTextarea(param)}
-				<textarea
-					id="param-{param.name}"
-					bind:value={values[param.name] as string}
-					required={param.required}
-					rows="4"
-					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-				></textarea>
+				<div class="relative">
+					<textarea
+						id="param-{param.name}"
+						bind:value={values[param.name] as string}
+						required={param.required}
+						rows="4"
+						class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+					></textarea>
+					{#if typeof values[param.name] === 'string' && hasTemplateTokens(values[param.name] as string)}
+						<span class="absolute right-2 bottom-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+							template
+						</span>
+					{/if}
+				</div>
 			{:else}
-				<input
-					id="param-{param.name}"
-					type="text"
-					bind:value={values[param.name] as string}
-					required={param.required}
-					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-				/>
+				<div class="relative">
+					<input
+						id="param-{param.name}"
+						type="text"
+						bind:value={values[param.name] as string}
+						required={param.required}
+						class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+					/>
+					{#if typeof values[param.name] === 'string' && hasTemplateTokens(values[param.name] as string)}
+						<span class="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+							template
+						</span>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	{/each}
@@ -118,15 +139,25 @@
 		<p class="text-sm text-zinc-500 italic">This tool has no parameters.</p>
 	{/if}
 
-	<button
-		type="submit"
-		disabled={loading}
-		class="rounded-md bg-indigo-500 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-	>
+	<div class="flex items-center gap-2">
 		{#if loading}
-			Executing...
+			<button
+				type="button"
+				onclick={oncancel}
+				class="rounded-md bg-red-500 px-5 py-2 text-sm font-medium text-white hover:bg-red-600"
+			>
+				Cancel
+			</button>
 		{:else}
-			Execute
+			<button
+				type="submit"
+				class="rounded-md bg-indigo-500 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-600"
+			>
+				Execute
+			</button>
 		{/if}
-	</button>
+		<span class="text-[10px] text-zinc-400 dark:text-zinc-500">
+			{navigator?.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter
+		</span>
+	</div>
 </form>

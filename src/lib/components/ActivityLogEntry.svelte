@@ -1,5 +1,9 @@
 <script lang="ts">
 	import type { LogEntry } from '$lib/types';
+	import { selectTool } from '$lib/stores/ui.svelte';
+	import { generateCurlFromResult } from '$lib/utils/curl-export';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import JsonViewer from './JsonViewer.svelte';
 
 	interface Props {
@@ -9,6 +13,7 @@
 	let { entry }: Props = $props();
 
 	let expanded = $state(false);
+	let curlCopied = $state(false);
 
 	const levelColors: Record<string, string> = {
 		info: 'bg-blue-500',
@@ -24,6 +29,8 @@
 		app: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-400'
 	};
 
+	const isError = $derived(entry.level === 'error');
+
 	function formatTime(ts: number): string {
 		const d = new Date(ts);
 		const h = d.getHours().toString().padStart(2, '0');
@@ -34,9 +41,38 @@
 	}
 
 	const hasDetails = $derived(entry.details !== undefined && entry.details !== null);
+
+	const curlCommand = $derived(() => {
+		if (!entry.details || typeof entry.details !== 'object') return null;
+		const result = entry.details as Record<string, unknown>;
+		if (!result.requestUrl) return null;
+		return generateCurlFromResult(result as {
+			requestMethod?: string;
+			requestUrl?: string;
+			requestHeaders?: Record<string, string>;
+			requestParams?: Record<string, unknown>;
+		});
+	});
+
+	async function copyCurl() {
+		const cmd = curlCommand();
+		if (!cmd) return;
+		await navigator.clipboard.writeText(cmd);
+		curlCopied = true;
+		setTimeout(() => (curlCopied = false), 2000);
+	}
+
+	function handleToolClick(e: MouseEvent) {
+		e.stopPropagation();
+		if (!entry.toolName) return;
+		selectTool(entry.toolName);
+		if (!$page.url.pathname.startsWith('/tools')) {
+			goto('/tools');
+		}
+	}
 </script>
 
-<div class="group flex flex-col border-b border-zinc-100 px-3 py-1.5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
+<div class="group flex flex-col border-b border-zinc-100 px-3 py-1.5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 {isError ? 'border-l-2 border-l-red-500 bg-red-50/50 dark:bg-red-500/5' : ''}">
 	<div class="flex items-center gap-2 text-xs">
 		<span class="shrink-0 font-mono text-zinc-400 dark:text-zinc-500">
 			{formatTime(entry.timestamp)}
@@ -48,9 +84,29 @@
 			{entry.category}
 		</span>
 
+		{#if entry.toolName}
+			<button
+				type="button"
+				onclick={handleToolClick}
+				class="shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30"
+			>
+				{entry.toolName}
+			</button>
+		{/if}
+
 		<span class="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
 			{entry.message}
 		</span>
+
+		{#if curlCommand()}
+			<button
+				type="button"
+				onclick={copyCurl}
+				class="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+			>
+				{curlCopied ? 'Copied!' : 'cURL'}
+			</button>
+		{/if}
 
 		{#if hasDetails}
 			<button

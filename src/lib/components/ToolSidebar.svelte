@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { toolsState } from '$lib/stores/tools.svelte';
 	import { uiState, selectTool } from '$lib/stores/ui.svelte';
+	import { favoritesState, toggleFavorite } from '$lib/stores/favorites.svelte';
+	import { connectionState } from '$lib/stores/connection.svelte';
 	import ToolListItem from './ToolListItem.svelte';
 
 	interface Props {
@@ -17,6 +19,18 @@
 			return tool.name.toLowerCase().includes(q) || tool.description.toLowerCase().includes(q);
 		})
 	);
+
+	const pinnedTools = $derived(
+		filteredTools.filter((t) => favoritesState.isFavorite(connectionState.discoveryUrl, t.name))
+	);
+
+	const unpinnedTools = $derived(
+		filteredTools.filter((t) => !favoritesState.isFavorite(connectionState.discoveryUrl, t.name))
+	);
+
+	function handleToggleFavorite(toolName: string) {
+		toggleFavorite(connectionState.discoveryUrl, toolName);
+	}
 </script>
 
 <aside class="flex h-full flex-col border-r border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
@@ -30,7 +44,8 @@
 				<input
 					type="text"
 					bind:value={uiState.searchQuery}
-					placeholder="Filter tools..."
+					placeholder="Filter tools... (Ctrl+K)"
+					data-sidebar-search
 					class="w-full rounded border border-zinc-300 bg-zinc-50 py-1.5 pl-8 pr-3 text-xs text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
 				/>
 			</div>
@@ -61,11 +76,30 @@
 				{/if}
 			</div>
 		{:else}
-			{#each filteredTools as tool (tool.name)}
+			{#if pinnedTools.length > 0}
+				<div class="px-3 pt-2 pb-1">
+					<span class="text-[10px] font-semibold uppercase tracking-wider text-amber-500 dark:text-amber-400">Pinned</span>
+				</div>
+				{#each pinnedTools as tool (tool.name)}
+					<ToolListItem
+						{tool}
+						selected={uiState.selectedToolName === tool.name}
+						onclick={() => selectTool(tool.name)}
+						favorited={true}
+						ontogglefavorite={() => handleToggleFavorite(tool.name)}
+					/>
+				{/each}
+				{#if unpinnedTools.length > 0}
+					<div class="mx-3 my-1 border-t border-zinc-200 dark:border-zinc-700"></div>
+				{/if}
+			{/if}
+			{#each unpinnedTools as tool (tool.name)}
 				<ToolListItem
 					{tool}
 					selected={uiState.selectedToolName === tool.name}
 					onclick={() => selectTool(tool.name)}
+					favorited={false}
+					ontogglefavorite={() => handleToggleFavorite(tool.name)}
 				/>
 			{/each}
 		{/if}

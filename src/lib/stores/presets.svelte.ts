@@ -43,7 +43,8 @@ export async function addPreset(
 	discoveryUrl: string,
 	toolName: string,
 	presetName: string,
-	values: Record<string, string | number | boolean>
+	values: Record<string, string | number | boolean>,
+	headers?: Record<string, string>
 ): Promise<ToolPreset> {
 	const now = new Date().toISOString();
 	const preset: ToolPreset = {
@@ -52,6 +53,7 @@ export async function addPreset(
 		discoveryUrl,
 		presetName,
 		values: { ...values },
+		headers,
 		createdAt: now,
 		updatedAt: now
 	};
@@ -76,12 +78,13 @@ export async function removePreset(id: string) {
 
 export async function overwritePreset(
 	id: string,
-	values: Record<string, string | number | boolean>
+	values: Record<string, string | number | boolean>,
+	headers?: Record<string, string>
 ) {
 	// Optimistic update
 	presetsState.presets = presetsState.presets.map((p) =>
-		p.id === id ? { ...p, values: { ...values }, updatedAt: new Date().toISOString() } : p
+		p.id === id ? { ...p, values: { ...values }, headers, updatedAt: new Date().toISOString() } : p
 	);
 
-	await dbUpdatePreset(id, values);
+	await dbUpdatePreset(id, values, headers);
 }

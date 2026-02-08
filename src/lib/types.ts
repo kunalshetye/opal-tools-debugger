@@ -24,6 +24,10 @@ export interface ToolExecutionResult {
 	duration: number;
 	requestSize?: number;
 	error?: string;
+	requestParams?: Record<string, unknown>;
+	requestUrl?: string;
+	requestMethod?: string;
+	requestHeaders?: Record<string, string>;
 }
 
 export interface ToolPreset {
@@ -32,6 +36,7 @@ export interface ToolPreset {
 	discoveryUrl: string;
 	presetName: string;
 	values: Record<string, string | number | boolean>;
+	headers?: Record<string, string>;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -46,4 +51,5 @@ export interface LogEntry {
 	category: LogCategory;
 	message: string;
 	details?: unknown;
+	toolName?: string;
 }
