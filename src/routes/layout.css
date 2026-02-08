@@ -1,1 +1,27 @@
 @import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Custom thin scrollbar for dark theme */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #52525b; /* zinc-600 */
+	border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #71717a; /* zinc-500 */
+}
+
+/* Monospace font stack for code/data display */
+.font-mono {
+	font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
+}

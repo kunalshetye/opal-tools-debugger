@@ -22,5 +22,6 @@ export interface ToolExecutionResult {
 	headers: Record<string, string>;
 	body: unknown;
 	duration: number;
+	requestSize?: number;
 	error?: string;
 }

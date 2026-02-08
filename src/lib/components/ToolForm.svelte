@@ -60,11 +60,11 @@
 <form onsubmit={handleSubmit} class="space-y-4">
 	{#each parameters as param (param.name)}
 		<div>
-			<label for="param-{param.name}" class="mb-1.5 block text-sm font-medium text-zinc-700">
+			<label for="param-{param.name}" class="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
 				{param.name}
-				{#if param.required}<span class="text-red-500">*</span>{/if}
+				{#if param.required}<span class="text-red-500 dark:text-red-400">*</span>{/if}
 			</label>
-			<p class="mb-1 text-xs text-zinc-400">{param.description}</p>
+			<p class="mb-1 text-xs text-zinc-400 dark:text-zinc-500">{param.description}</p>
 
 			{#if param.type === 'boolean'}
 				<label class="inline-flex items-center gap-2">
@@ -72,9 +72,9 @@
 						id="param-{param.name}"
 						type="checkbox"
 						bind:checked={values[param.name] as boolean}
-						class="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+						class="h-4 w-4 rounded border-zinc-300 bg-white text-indigo-500 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:focus:ring-offset-zinc-900"
 					/>
-					<span class="text-sm text-zinc-600">Enabled</span>
+					<span class="text-sm text-zinc-500 dark:text-zinc-400">Enabled</span>
 				</label>
 			{:else if param.type === 'number'}
 				<input
@@ -82,7 +82,7 @@
 					type="number"
 					bind:value={values[param.name] as number}
 					required={param.required}
-					class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
 				/>
 			{:else if isTextarea(param)}
 				<textarea
@@ -90,7 +90,7 @@
 					bind:value={values[param.name] as string}
 					required={param.required}
 					rows="4"
-					class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
 				></textarea>
 			{:else}
 				<input
@@ -98,7 +98,7 @@
 					type="text"
 					bind:value={values[param.name] as string}
 					required={param.required}
-					class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
 				/>
 			{/if}
 		</div>
@@ -111,7 +111,7 @@
 	<button
 		type="submit"
 		disabled={loading}
-		class="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+		class="rounded-md bg-indigo-500 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
 	>
 		{#if loading}
 			Executing...

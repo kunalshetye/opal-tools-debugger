@@ -86,7 +86,7 @@
 
 <form onsubmit={handleConnect} class="w-full max-w-lg space-y-5">
 	<div>
-		<label for="discovery-url" class="mb-1.5 block text-sm font-medium text-zinc-700">
+		<label for="discovery-url" class="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
 			Discovery URL <span class="text-red-500">*</span>
 		</label>
 		<input
@@ -95,12 +95,12 @@
 			bind:value={discoveryUrl}
 			placeholder="https://your-opal-tools.example.com/discovery"
 			required
-			class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+			class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
 		/>
 	</div>
 
 	<div>
-		<label for="bearer-token" class="mb-1.5 block text-sm font-medium text-zinc-700">
+		<label for="bearer-token" class="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
 			Bearer Token
 			<span class="text-zinc-400">(optional)</span>
 		</label>
@@ -110,12 +110,12 @@
 				type={showToken ? 'text' : 'password'}
 				bind:value={bearerToken}
 				placeholder="Enter bearer token"
-				class="w-full rounded-md border border-zinc-300 px-3 py-2 pr-16 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+				class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 pr-16 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
 			/>
 			<button
 				type="button"
 				onclick={() => (showToken = !showToken)}
-				class="absolute top-1/2 right-2 -translate-y-1/2 rounded px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700"
+				class="absolute top-1/2 right-2 -translate-y-1/2 rounded px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
 			>
 				{showToken ? 'Hide' : 'Show'}
 			</button>
@@ -123,7 +123,7 @@
 	</div>
 
 	{#if error}
-		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
 			{error}
 		</div>
 	{/if}
@@ -144,9 +144,9 @@
 {#if historyState.length > 0}
 	<div class="mt-8 w-full max-w-lg">
 		<div class="mb-3 flex items-center gap-3">
-			<div class="h-px flex-1 bg-zinc-200"></div>
+			<div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></div>
 			<span class="text-xs font-medium text-zinc-400 uppercase">Recent connections</span>
-			<div class="h-px flex-1 bg-zinc-200"></div>
+			<div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></div>
 		</div>
 
 		<ul class="space-y-2">
@@ -156,10 +156,10 @@
 						type="button"
 						disabled={connectingIndex !== -1}
 						onclick={() => handleHistoryConnect(entry, i)}
-						class="w-full rounded-md border border-zinc-200 px-3 py-2.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+						class="w-full rounded-md border border-zinc-200 bg-white px-3 py-2.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-indigo-500/50 dark:hover:bg-indigo-500/10"
 					>
 						<div class="flex items-center justify-between gap-2">
-							<span class="truncate text-sm font-medium text-zinc-700">
+							<span class="truncate text-sm font-medium text-zinc-700 dark:text-zinc-300">
 								{entry.discoveryUrl}
 							</span>
 							<span class="shrink-0 text-xs text-zinc-400">
@@ -172,13 +172,13 @@
 							</div>
 						{/if}
 						{#if connectingIndex === i}
-							<div class="mt-1 text-xs text-indigo-600">Connecting...</div>
+							<div class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">Connecting...</div>
 						{/if}
 					</button>
 					<button
 						type="button"
 						onclick={(e) => { e.stopPropagation(); removeFromHistory(i); }}
-						class="absolute top-2 right-2 hidden rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 group-hover:block"
+						class="absolute top-2 right-2 hidden rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 group-hover:block dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
 						aria-label="Remove from history"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">

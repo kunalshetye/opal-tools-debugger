@@ -16,13 +16,15 @@ export async function executeTool(
 		headers['Authorization'] = `Bearer ${bearerToken}`;
 	}
 
+	const requestBody = JSON.stringify(params);
+	const requestSize = new Blob([requestBody]).size;
 	const start = performance.now();
 
 	try {
 		const response = await fetch(url, {
 			method: 'POST',
 			headers,
-			body: JSON.stringify(params)
+			body: requestBody
 		});
 
 		const duration = Math.round(performance.now() - start);
@@ -44,7 +46,8 @@ export async function executeTool(
 			status: response.status,
 			headers: responseHeaders,
 			body,
-			duration
+			duration,
+			requestSize
 		};
 	} catch (err) {
 		const duration = Math.round(performance.now() - start);
@@ -53,6 +56,7 @@ export async function executeTool(
 			headers: {},
 			body: null,
 			duration,
+			requestSize,
 			error: err instanceof Error ? err.message : 'Unknown error'
 		};
 	}

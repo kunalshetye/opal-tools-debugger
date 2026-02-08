@@ -32,8 +32,8 @@
 
 <div class="flex flex-col items-center pt-16">
 	<div class="mb-8 text-center">
-		<h2 class="mb-2 text-2xl font-bold text-zinc-900">Connect to Opal Tools</h2>
-		<p class="text-sm text-zinc-500">
+		<h2 class="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">Connect to Opal Tools</h2>
+		<p class="text-sm text-zinc-500 dark:text-zinc-400">
 			Enter your discovery endpoint URL to list and test your Opal tools locally.
 		</p>
 	</div>

@@ -1,42 +1,107 @@
-# sv
+# Opal Tools Debugger
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A local debugger for [Opal tools](https://opal.dev) — test and execute tools from your browser without deploying.
 
-## Creating a project
+## Quick Start
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
+```bash
+npx @kunalshetye/opal-tools-debugger
 ```
 
-To recreate this project with the same configuration:
+The debugger opens at `http://localhost:4873`. Enter your discovery endpoint URL in the UI and start testing.
 
-```sh
-# recreate this project
-bun x sv create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" tailwindcss="plugins:none" sveltekit-adapter="adapter:auto" --install bun opal-tools-debugger
+### CLI Options
+
+```bash
+npx @kunalshetye/opal-tools-debugger \
+  --discovery-url https://your-opal-tools.example.com/discovery \
+  --bearer-token YOUR_TOKEN \
+  --port 4873
 ```
 
-## Developing
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-d, --discovery-url <url>` | Discovery endpoint URL (pre-fills the UI) | — |
+| `-t, --bearer-token <token>` | Bearer token for authentication | — |
+| `-p, --port <number>` | Port for the debugger server | `4873` |
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Features
 
-```sh
-npm run dev
+- **Discovery** — Connects to your Opal discovery endpoint and lists all available tools with their parameters, HTTP methods, and endpoints.
+- **Tool Execution** — Fill in parameters via auto-generated forms and execute tools directly. Responses show status, headers, body, and timing.
+- **Execution History** — Each tool keeps the last 10 execution results in localStorage so you can compare responses across runs.
+- **Connection History** — Recent connections are saved locally. One-click reconnect to any previous endpoint without retyping URLs and tokens.
+- **Connection Switcher** — Switch between discovery endpoints directly from the header dropdown without disconnecting first. The dropdown lists all connections from history and performs a seamless switch in place.
+- **Dark/Light Theme** — Toggle between dark and light mode via the header button. Defaults to your OS preference and persists across sessions.
+- **Search** — Filter tools by name or description in the sidebar.
+- **JSON Viewer** — Collapsible, syntax-highlighted JSON tree for response bodies.
+- **CLI Pre-fill** — Pass `--discovery-url` and `--bearer-token` via CLI to skip manual entry.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+## How It Works
+
+1. The CLI (`bin/cli.js`) sets environment variables and starts a SvelteKit (adapter-node) server.
+2. On first load, the UI fetches `/api/config` to pick up CLI-provided defaults.
+3. The client calls your discovery endpoint directly (CORS must be open) and renders the tool list.
+4. Tool execution sends requests from the browser to your Opal tool endpoints.
+
+All state (connection, tools, history, theme) lives in the browser's localStorage — nothing is stored server-side.
+
+## Development
+
+```bash
+bun install
+bun run dev        # Start dev server at http://localhost:5173
+bun run build      # Production build
+bun run preview    # Preview production build
+bun run check      # Type-check
+bun run lint       # Lint + format check
+bun run test       # Run unit tests
 ```
 
-## Building
+## Tech Stack
 
-To create a production version of your app:
+- [SvelteKit](https://svelte.dev/docs/kit) with adapter-node
+- [Svelte 5](https://svelte.dev/docs/svelte) runes (`$state`, `$derived`, `$effect`)
+- [Tailwind CSS 4](https://tailwindcss.com) with class-based dark mode (`@custom-variant dark`)
+- [Commander](https://github.com/tj/commander.js) for the CLI
+- [Vitest](https://vitest.dev) + Playwright for testing
 
-```sh
-npm run build
+## Project Structure
+
+```
+bin/cli.js                          # CLI entry point (npx executable)
+src/
+  lib/
+    api/
+      discovery.ts                  # Fetch discovery endpoint
+      executor.ts                   # Execute tool requests
+    components/
+      ConnectionForm.svelte         # URL/token form + connection history
+      Header.svelte                 # App header with connection switcher + theme toggle
+      JsonViewer.svelte             # Collapsible JSON tree viewer
+      ResponseViewer.svelte         # Response display (status, headers, body, timing)
+      ToolDetailPanel.svelte        # Tool detail — form + response side by side
+      ToolForm.svelte               # Parameter form for tool execution
+      ToolListItem.svelte           # Single tool item in sidebar list
+      ToolSidebar.svelte            # Sidebar with search + tool list
+    stores/
+      connection.svelte.ts          # Connection state (URL, token, connected)
+      history.svelte.ts             # Connection history (recent endpoints)
+      theme.svelte.ts               # Dark/light theme state + persistence
+      tools.svelte.ts               # Tools state (functions list)
+      ui.svelte.ts                  # UI state (selection, sidebar, execution results)
+    types.ts                        # TypeScript interfaces
+    utils/
+      http-status.ts                # HTTP status code labels and colors
+  routes/
+    +layout.svelte                  # App layout with header + theme init
+    +page.svelte                    # Home — connection form
+    layout.css                      # Global styles + Tailwind config
+    api/config/+server.ts           # Returns CLI-provided env vars
+    tools/
+      +page.svelte                  # Tools page — sidebar + detail panel
 ```
 
-You can preview the production build with `npm run preview`.
+## License
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+MIT
