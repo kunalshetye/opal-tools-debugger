@@ -19,11 +19,11 @@ npx @kunalshetye/opal-tools-debugger \
   --port 4873
 ```
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-d, --discovery-url <url>` | Discovery endpoint URL (pre-fills the UI) | — |
-| `-t, --bearer-token <token>` | Bearer token for authentication | — |
-| `-p, --port <number>` | Port for the debugger server | `4873` |
+| Flag                         | Description                               | Default |
+| ---------------------------- | ----------------------------------------- | ------- |
+| `-d, --discovery-url <url>`  | Discovery endpoint URL (pre-fills the UI) | —       |
+| `-t, --bearer-token <token>` | Bearer token for authentication           | —       |
+| `-p, --port <number>`        | Port for the debugger server              | `4873`  |
 
 ## Features
 
@@ -37,6 +37,152 @@ npx @kunalshetye/opal-tools-debugger \
 - **Search** — Filter tools by name or description in the sidebar.
 - **JSON Viewer** — Collapsible, syntax-highlighted JSON tree for response bodies.
 - **CLI Pre-fill** — Pass `--discovery-url` and `--bearer-token` via CLI to skip manual entry.
+
+## Integrating Into Your Opal Tools Project
+
+Add a script to your project's `package.json` so your team can launch the debugger with a single command — no global install needed.
+
+> **One-off usage without a script** — you can run the debugger directly without adding it to `package.json`:
+>
+> ```bash
+> npx @kunalshetye/opal-tools-debugger                          # npm
+> yarn dlx @kunalshetye/opal-tools-debugger                     # yarn
+> pnpm dlx @kunalshetye/opal-tools-debugger                     # pnpm
+> bunx @kunalshetye/opal-tools-debugger                         # bun
+> ```
+
+### Basic — just launch the debugger
+
+```json
+{
+	"scripts": {
+		"debugger": "npx @kunalshetye/opal-tools-debugger"
+	}
+}
+```
+
+```bash
+npm run debugger       # npm
+yarn debugger          # yarn
+pnpm run debugger      # pnpm
+bun run debugger       # bun
+```
+
+Opens at `http://localhost:4873`. Enter your discovery URL manually in the UI.
+
+### Pre-filled — point at your local dev server
+
+```json
+{
+	"scripts": {
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery"
+	}
+}
+```
+
+```bash
+npm run debugger       # npm
+yarn debugger          # yarn
+pnpm run debugger      # pnpm
+bun run debugger       # bun
+```
+
+The discovery URL is pre-filled in the UI on launch — just click Connect.
+
+### With authentication
+
+```json
+{
+	"scripts": {
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -t $OPAL_TOKEN"
+	}
+}
+```
+
+Reads the token from an environment variable. You can also hardcode a dev token if it's a non-sensitive local environment:
+
+```json
+{
+	"scripts": {
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -t dev-token-123"
+	}
+}
+```
+
+```bash
+npm run debugger       # npm
+yarn debugger          # yarn
+pnpm run debugger      # pnpm
+bun run debugger       # bun
+```
+
+### Multiple environments
+
+```json
+{
+	"scripts": {
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery",
+		"debugger:staging": "npx @kunalshetye/opal-tools-debugger -d https://staging.example.com/discovery -t $STAGING_TOKEN",
+		"debugger:prod": "npx @kunalshetye/opal-tools-debugger -d https://api.example.com/discovery -t $PROD_TOKEN -p 4874"
+	}
+}
+```
+
+```bash
+# npm
+npm run debugger           # Local dev
+npm run debugger:staging   # Staging environment
+npm run debugger:prod      # Production (read-only) on a different port
+
+# yarn
+yarn debugger
+yarn debugger:staging
+yarn debugger:prod
+
+# pnpm
+pnpm run debugger
+pnpm run debugger:staging
+pnpm run debugger:prod
+
+# bun
+bun run debugger
+bun run debugger:staging
+bun run debugger:prod
+```
+
+### Custom port — avoid conflicts
+
+```json
+{
+	"scripts": {
+		"dev": "node server.js",
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery -p 9000"
+	}
+}
+```
+
+Runs the debugger on port 9000 so it doesn't clash with your dev server.
+
+### Alongside your dev server (concurrent)
+
+If you use a tool like [concurrently](https://www.npmjs.com/package/concurrently):
+
+```json
+{
+	"scripts": {
+		"dev": "node server.js",
+		"debugger": "npx @kunalshetye/opal-tools-debugger -d http://localhost:3000/discovery",
+		"dev:debug": "concurrently \"npm run dev\" \"npm run debugger\""
+	}
+}
+```
+
+```bash
+npm run dev:debug      # npm
+yarn dev:debug         # yarn
+pnpm run dev:debug     # pnpm
+bun run dev:debug      # bun
+```
 
 ## How It Works
 
