@@ -2,8 +2,9 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { connectionState } from '$lib/stores/connection.svelte';
-	import { getToolByName, toolsState } from '$lib/stores/tools.svelte';
+	import { connectionState, disconnect } from '$lib/stores/connection.svelte';
+	import { getToolByName, toolsState, setTools, setLoading, setError, clearTools } from '$lib/stores/tools.svelte';
+	import { fetchDiscovery } from '$lib/api/discovery';
 	import { executeTool } from '$lib/api/executor';
 	import ToolForm from '$lib/components/ToolForm.svelte';
 	import ResponseViewer from '$lib/components/ResponseViewer.svelte';
@@ -16,13 +17,49 @@
 	const tool = $derived(getToolByName(toolName));
 
 	let loading = $state(false);
+	let refreshing = $state(false);
+	let refreshError = $state('');
 	let results: ToolExecutionResult[] = $state([]);
 
-	onMount(() => {
-		if (!connectionState.connected || toolsState.functions.length === 0) {
+	async function refreshDiscovery() {
+		refreshing = true;
+		refreshError = '';
+		try {
+			const data = await fetchDiscovery(
+				connectionState.discoveryUrl,
+				connectionState.bearerToken || undefined
+			);
+			setTools(data.functions);
+		} catch (err) {
+			refreshError = err instanceof Error ? err.message : 'Failed to refresh';
+		} finally {
+			refreshing = false;
+		}
+	}
+
+	onMount(async () => {
+		if (!connectionState.connected) {
 			goto('/');
 			return;
 		}
+
+		// Re-fetch tools from discovery if they're not in memory (e.g. after page refresh)
+		if (toolsState.functions.length === 0) {
+			setLoading();
+			try {
+				const data = await fetchDiscovery(
+					connectionState.discoveryUrl,
+					connectionState.bearerToken || undefined
+				);
+				setTools(data.functions);
+			} catch {
+				clearTools();
+				disconnect();
+				goto('/');
+				return;
+			}
+		}
+
 		// Load execution history from localStorage
 		if (browser && toolName) {
 			try {
@@ -67,7 +104,19 @@
 		</a>
 
 		{#if tool}
-			<h2 class="text-xl font-bold text-zinc-900">{tool.name}</h2>
+			<div class="flex items-center justify-between">
+				<h2 class="text-xl font-bold text-zinc-900">{tool.name}</h2>
+				<button
+					onclick={refreshDiscovery}
+					disabled={refreshing}
+					class="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
+				>
+					<svg class="h-4 w-4 {refreshing ? 'animate-spin' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+					</svg>
+					{refreshing ? 'Refreshing...' : 'Refresh'}
+				</button>
+			</div>
 			<p class="mt-1 text-sm text-zinc-500">{tool.description}</p>
 			<div class="mt-2 flex items-center gap-3 text-xs text-zinc-400">
 				<span class="rounded bg-zinc-100 px-2 py-0.5 font-mono font-semibold uppercase text-zinc-600">
@@ -75,6 +124,12 @@
 				</span>
 				<span class="font-mono">{connectionState.baseUrl}{tool.endpoint}</span>
 			</div>
+
+			{#if refreshError}
+				<div class="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+					{refreshError}
+				</div>
+			{/if}
 		{/if}
 	</div>
 

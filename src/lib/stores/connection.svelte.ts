@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { addToHistory } from './history.svelte';
 
 const STORAGE_KEY = 'opal-debugger-connection';
 
@@ -45,6 +46,7 @@ export function connect(discoveryUrl: string, bearerToken: string) {
 	connectionState.baseUrl = deriveBaseUrl(discoveryUrl);
 	connectionState.connected = true;
 	saveToStorage(connectionState);
+	addToHistory(discoveryUrl, bearerToken);
 }
 
 export function disconnect() {

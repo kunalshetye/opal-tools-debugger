@@ -2,15 +2,14 @@
 	import { onMount } from 'svelte';
 	import ConnectionForm from '$lib/components/ConnectionForm.svelte';
 	import { connectionState } from '$lib/stores/connection.svelte';
-	import { toolsState } from '$lib/stores/tools.svelte';
 	import { goto } from '$app/navigation';
 
 	let configUrl = $state('');
 	let configToken = $state('');
 
 	onMount(async () => {
-		// If already connected with tools loaded, go to tools page
-		if (connectionState.connected && toolsState.functions.length > 0) {
+		// If already connected, go straight to tools page
+		if (connectionState.connected) {
 			goto('/tools');
 			return;
 		}
