@@ -1,6 +1,6 @@
 # OTD (Opal Tools Debugger)
 
-A local debugger for [Opal tools](https://opal.dev) — test and execute tools from your browser without deploying.
+A local debugger for Optimizely Opal Tools — test and execute tools from your browser without deploying.
 
 ## Quick Start
 
