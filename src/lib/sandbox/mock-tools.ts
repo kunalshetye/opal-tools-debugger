@@ -47,5 +47,46 @@ export const SANDBOX_TOOLS: OpalFunction[] = [
 				description: 'Include a data section in the response'
 			}
 		]
+	},
+	{
+		name: 'island-demo',
+		description: 'Returns an interactive island with editable fields and actions.',
+		endpoint: '/sandbox/island-demo',
+		http_method: 'POST',
+		parameters: [
+			{
+				name: 'location',
+				type: 'string',
+				required: false,
+				description: 'Initial location for the weather island'
+			},
+			{
+				name: 'units',
+				type: 'string',
+				required: false,
+				description: 'Temperature units: metric, imperial, or kelvin'
+			}
+		]
+	},
+	{
+		name: 'proteus-resource-demo',
+		description: 'Links to a Proteus UI resource and returns sample data for the document.',
+		endpoint: '/sandbox/proteus-resource-demo',
+		http_method: 'POST',
+		ui_resource: 'ui://sandbox/create-task',
+		parameters: [
+			{
+				name: 'title',
+				type: 'string',
+				required: false,
+				description: 'Task title to echo in the response'
+			},
+			{
+				name: 'priority',
+				type: 'string',
+				required: false,
+				description: 'Task priority to echo in the response'
+			}
+		]
 	}
 ];

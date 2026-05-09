@@ -11,7 +11,7 @@
 	import { environmentsState } from '$lib/stores/environments.svelte';
 	import { resolveAllTemplates } from '$lib/utils/template';
 	import { isSandboxMode } from '$lib/sandbox/constants';
-	import { executeSandboxTool } from '$lib/sandbox/mock-executor';
+	import { executeSandboxInteraction, executeSandboxTool, readSandboxResource } from '$lib/sandbox/mock-executor';
 	import type { ToolPreset, ToolExecutionResult } from '$lib/types';
 	import { isProteusDocument, parseResourceText } from '$lib/utils/proteus-detect';
 	import ToolForm from './ToolForm.svelte';
@@ -173,13 +173,15 @@
 		resourceLoading = true;
 		resourceError = null;
 		try {
-			const resource = await readResource(
-				connectionState.baseUrl,
-				tool.ui_resource,
-				connectionState.bearerToken || undefined,
-				undefined,
-				getCustomHeadersObj()
-			);
+			const resource = isSandboxMode(connectionState.discoveryUrl)
+				? await readSandboxResource(tool.ui_resource)
+				: await readResource(
+					connectionState.baseUrl,
+					tool.ui_resource,
+					connectionState.bearerToken || undefined,
+					undefined,
+					getCustomHeadersObj()
+				);
 			resourceDocument = parseResourceText(resource.text);
 			logSuccess('discovery', `Loaded UI resource ${tool.ui_resource}`, resource, tool.name);
 		} catch (err) {
@@ -196,14 +198,16 @@
 	) {
 		if (!tool) return;
 		if (action.endpoint === '/interactions/execute') {
-			const body = await executeInteraction(
-				connectionState.baseUrl,
-				action.name,
-				parameters,
-				connectionState.bearerToken || undefined,
-				undefined,
-				getCustomHeadersObj()
-			);
+			const body = isSandboxMode(connectionState.discoveryUrl)
+				? await executeSandboxInteraction(action.name, parameters)
+				: await executeInteraction(
+					connectionState.baseUrl,
+					action.name,
+					parameters,
+					connectionState.bearerToken || undefined,
+					undefined,
+					getCustomHeadersObj()
+				);
 			addResultForTool(tool.name, {
 				status: 200,
 				headers: {},
@@ -215,28 +219,32 @@
 			});
 			return;
 		}
-		const result = await executeTool(
-			connectionState.baseUrl,
-			action.endpoint,
-			parameters,
-			connectionState.bearerToken || undefined,
-			'POST',
-			undefined,
-			getCustomHeadersObj()
-		);
+		const result = isSandboxMode(connectionState.discoveryUrl)
+			? await executeSandboxTool(action.endpoint.split('/').pop() || action.name, parameters)
+			: await executeTool(
+				connectionState.baseUrl,
+				action.endpoint,
+				parameters,
+				connectionState.bearerToken || undefined,
+				'POST',
+				undefined,
+				getCustomHeadersObj()
+			);
 		addResultForTool(tool.name, result);
 	}
 
 	async function handleProteusInteraction(name: string, parameters: Record<string, unknown>) {
 		if (!tool) return;
-		const body = await executeInteraction(
-			connectionState.baseUrl,
-			name,
-			parameters,
-			connectionState.bearerToken || undefined,
-			undefined,
-			getCustomHeadersObj()
-		);
+		const body = isSandboxMode(connectionState.discoveryUrl)
+			? await executeSandboxInteraction(name, parameters)
+			: await executeInteraction(
+				connectionState.baseUrl,
+				name,
+				parameters,
+				connectionState.bearerToken || undefined,
+				undefined,
+				getCustomHeadersObj()
+			);
 		addResultForTool(tool.name, {
 			status: 200,
 			headers: {},

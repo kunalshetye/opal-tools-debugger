@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { executeSandboxTool } from './mock-executor';
+import { executeSandboxInteraction, executeSandboxTool, readSandboxResource } from './mock-executor';
 
 beforeEach(() => {
 	vi.stubGlobal('performance', { now: vi.fn(() => Date.now()) });
@@ -125,6 +125,53 @@ describe('executeSandboxTool', () => {
 		it('returns 404 for an unknown tool', async () => {
 			const result = await executeSandboxTool('nonexistent-tool', {});
 			expect(result.status).toBe(404);
+		});
+	});
+
+	describe('island-demo', () => {
+		it('returns an IslandResponse-compatible body', async () => {
+			const result = await executeSandboxTool('island-demo', { location: 'Rotterdam', units: 'imperial' });
+			expect(result.status).toBe(200);
+			const body = result.body as Record<string, unknown>;
+			expect(body.type).toBe('island');
+			const config = body.config as Record<string, unknown>;
+			const islands = config.islands as Array<Record<string, unknown>>;
+			expect(islands).toHaveLength(1);
+			expect(islands[0].actions).toBeDefined();
+		});
+
+		it('refresh endpoint returns updated island response', async () => {
+			const result = await executeSandboxTool('island-refresh', { location: 'Paris', units: 'metric' });
+			expect(result.status).toBe(200);
+			expect((result.body as Record<string, unknown>).type).toBe('island');
+		});
+	});
+
+	describe('proteus-resource-demo', () => {
+		it('returns sample data and advertises JSON', async () => {
+			const result = await executeSandboxTool('proteus-resource-demo', { title: 'Test task' });
+			expect(result.status).toBe(200);
+			expect(result.headers['content-type']).toBe('application/json');
+			expect((result.body as Record<string, unknown>).title).toBe('Test task');
+		});
+	});
+
+	describe('resources and interactions', () => {
+		it('reads the sandbox Proteus resource', async () => {
+			const resource = await readSandboxResource('ui://sandbox/create-task');
+			expect(resource.mimeType).toBe('application/vnd.opal.proteus+json');
+			const document = JSON.parse(resource.text);
+			expect(document.$type).toBe('Document');
+			expect(document.actions).toBeDefined();
+		});
+
+		it('executes the sandbox task interaction', async () => {
+			const result = await executeSandboxInteraction('submit_task_form', { title: 'Ship it' });
+			expect((result as Record<string, unknown>).task_id).toBe('sandbox-task-123');
+		});
+
+		it('throws for unknown sandbox resources', async () => {
+			await expect(readSandboxResource('ui://sandbox/missing')).rejects.toThrow('Unknown sandbox resource');
 		});
 	});
 
