@@ -22,8 +22,8 @@
 	const results = $derived(uiState.selectedToolName ? getResultsForTool(uiState.selectedToolName) : []);
 
 	let loading = $state(false);
-	let currentFormValues: Record<string, string | number | boolean> = $state({});
-	let initialValues: Record<string, string | number | boolean> | null = $state(null);
+	let currentFormValues: Record<string, unknown> = $state({});
+	let initialValues: Record<string, unknown> | null = $state(null);
 	let customHeaders: Array<{ key: string; value: string }> = $state([]);
 	let abortController: AbortController | null = $state(null);
 	let showDiff = $state(false);
@@ -46,7 +46,7 @@
 		}
 	});
 
-	function handleValuesChange(values: Record<string, string | number | boolean>) {
+	function handleValuesChange(values: Record<string, unknown>) {
 		currentFormValues = values;
 	}
 
@@ -164,7 +164,7 @@
 			const params: Record<string, unknown> = {};
 			for (const param of tool.parameters) {
 				const val = preset.values[param.name];
-				if (param.type === 'number') {
+				if (param.type === 'number' || param.type === 'integer') {
 					params[param.name] = Number(val);
 				} else {
 					params[param.name] = val;
@@ -202,6 +202,20 @@
 			<div class="mt-1.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
 				{connectionState.baseUrl}{tool.endpoint}
 			</div>
+			{#if tool.auth_requirements?.length || tool.ui_resource}
+				<div class="mt-2 flex flex-wrap gap-2 text-[11px]">
+					{#each tool.auth_requirements ?? [] as auth}
+						<span class="rounded bg-violet-100 px-2 py-0.5 font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+							auth: {auth.provider}/{auth.scope_bundle}{auth.required ? '' : ' optional'}
+						</span>
+					{/each}
+					{#if tool.ui_resource}
+						<span class="rounded bg-teal-100 px-2 py-0.5 font-medium text-teal-700 dark:bg-teal-500/20 dark:text-teal-300">
+							ui: {tool.ui_resource}
+						</span>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Form + Response -->

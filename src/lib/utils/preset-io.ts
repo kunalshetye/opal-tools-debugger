@@ -4,7 +4,7 @@ import { addPreset } from '$lib/stores/presets.svelte';
 interface PresetExportFormat {
 	version: 1;
 	tool: string;
-	presets: Array<{ name: string; values: Record<string, string | number | boolean>; headers?: Record<string, string> }>;
+	presets: Array<{ name: string; values: Record<string, unknown>; headers?: Record<string, string> }>;
 }
 
 export function exportPresets(presets: ToolPreset[], toolName: string) {

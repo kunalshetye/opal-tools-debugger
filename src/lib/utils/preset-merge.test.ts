@@ -87,6 +87,14 @@ describe('mergePresetWithParameters', () => {
 		expect(result).toEqual({ count: 0 });
 	});
 
+	it('coerces integer values like numbers', () => {
+		const result = mergePresetWithParameters(
+			{ count: '42' },
+			[param('count', 'integer')]
+		);
+		expect(result).toEqual({ count: 42 });
+	});
+
 	it('uses default false for missing boolean param', () => {
 		const result = mergePresetWithParameters(
 			{},
@@ -111,9 +119,9 @@ describe('mergePresetWithParameters', () => {
 	it('returns all defaults for empty preset values', () => {
 		const result = mergePresetWithParameters(
 			{},
-			[param('name', 'string'), param('count', 'number'), param('active', 'boolean')]
+			[param('name', 'string'), param('count', 'number'), param('active', 'boolean'), param('items', 'array'), param('metadata', 'object')]
 		);
-		expect(result).toEqual({ name: '', count: 0, active: false });
+		expect(result).toEqual({ name: '', count: 0, active: false, items: '[]', metadata: '{}' });
 	});
 
 	it('coerces non-numeric string to 0 for number type', () => {
@@ -122,5 +130,16 @@ describe('mergePresetWithParameters', () => {
 			[param('count', 'number')]
 		);
 		expect(result).toEqual({ count: 0 });
+	});
+
+	it('stringifies array and object preset values for JSON text inputs', () => {
+		const result = mergePresetWithParameters(
+			{ items: ['a', 'b'], metadata: { id: 1 } },
+			[param('items', 'array'), param('metadata', 'object')]
+		);
+		expect(result).toEqual({
+			items: JSON.stringify(['a', 'b'], null, 2),
+			metadata: JSON.stringify({ id: 1 }, null, 2)
+		});
 	});
 });

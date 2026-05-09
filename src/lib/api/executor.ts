@@ -34,7 +34,8 @@ export async function executeTool(
 		headers['Authorization'] = `Bearer ${bearerToken}`;
 	}
 
-	const requestBody = isBodyMethod ? JSON.stringify(params) : undefined;
+	const requestPayload = { parameters: params };
+	const requestBody = isBodyMethod ? JSON.stringify(requestPayload) : undefined;
 	const requestSize = requestBody ? new Blob([requestBody]).size : 0;
 	const start = performance.now();
 

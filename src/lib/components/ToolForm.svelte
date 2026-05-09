@@ -6,22 +6,24 @@
 		parameters: OpalParameter[];
 		onexecute: (params: Record<string, unknown>) => void;
 		loading?: boolean;
-		initialValues?: Record<string, string | number | boolean> | null;
-		onvalueschange?: (values: Record<string, string | number | boolean>) => void;
+		initialValues?: Record<string, unknown> | null;
+		onvalueschange?: (values: Record<string, unknown>) => void;
 		oncancel?: () => void;
 	}
 
 	let { parameters, onexecute, loading = false, initialValues = null, onvalueschange, oncancel }: Props = $props();
 
-	let values: Record<string, string | number | boolean> = $state({});
+	let values: Record<string, unknown> = $state({});
 	let formEl: HTMLFormElement | undefined = $state();
 
 	// Reset values to fresh defaults when parameters change (tool switch)
 	$effect(() => {
-		const defaults: Record<string, string | number | boolean> = {};
+		const defaults: Record<string, unknown> = {};
 		for (const param of parameters) {
 			if (param.type === 'boolean') defaults[param.name] = false;
-			else if (param.type === 'number') defaults[param.name] = 0;
+			else if (param.type === 'number' || param.type === 'integer') defaults[param.name] = 0;
+			else if (param.type === 'array') defaults[param.name] = '[]';
+			else if (param.type === 'object') defaults[param.name] = '{}';
 			else defaults[param.name] = '';
 		}
 		values = defaults;
@@ -41,7 +43,25 @@
 
 	function isTextarea(param: OpalParameter): boolean {
 		const desc = param.description.toLowerCase();
-		return desc.includes('json') || desc.includes('html') || desc.includes('body') || desc.includes('content');
+		return param.type === 'array' || param.type === 'object' || desc.includes('json') || desc.includes('html') || desc.includes('body') || desc.includes('content');
+	}
+
+	function parseJsonParam(param: OpalParameter, val: unknown): unknown {
+		if (typeof val !== 'string') return val;
+		if (val.trim() === '' && !param.required) return undefined;
+		try {
+			const parsed = JSON.parse(val);
+			if (param.type === 'array' && !Array.isArray(parsed)) {
+				throw new Error(`${param.name} must be a JSON array`);
+			}
+			if (param.type === 'object' && (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object')) {
+				throw new Error(`${param.name} must be a JSON object`);
+			}
+			return parsed;
+		} catch (err) {
+			window.alert(err instanceof Error ? err.message : `Invalid JSON for ${param.name}`);
+			throw err;
+		}
 	}
 
 	function handleSubmit(e: Event) {
@@ -59,8 +79,12 @@
 		for (const param of parameters) {
 			const val = values[param.name];
 			if (param.type === 'string' && val === '' && !param.required) continue;
-			if (param.type === 'number') {
+			if ((param.type === 'array' || param.type === 'object') && val === '' && !param.required) continue;
+			if (param.type === 'number' || param.type === 'integer') {
 				params[param.name] = Number(val);
+			} else if (param.type === 'array' || param.type === 'object') {
+				const parsed = parseJsonParam(param, val);
+				if (parsed !== undefined) params[param.name] = parsed;
 			} else {
 				params[param.name] = val;
 			}
@@ -93,10 +117,11 @@
 					/>
 					<span class="text-sm text-zinc-500 dark:text-zinc-400">Enabled</span>
 				</label>
-			{:else if param.type === 'number'}
+			{:else if param.type === 'number' || param.type === 'integer'}
 				<input
 					id="param-{param.name}"
 					type="number"
+					step={param.type === 'integer' ? '1' : 'any'}
 					bind:value={values[param.name] as number}
 					required={param.required}
 					class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"

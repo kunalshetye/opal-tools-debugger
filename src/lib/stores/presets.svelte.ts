@@ -43,7 +43,7 @@ export async function addPreset(
 	discoveryUrl: string,
 	toolName: string,
 	presetName: string,
-	values: Record<string, string | number | boolean>,
+	values: Record<string, unknown>,
 	headers?: Record<string, string>
 ): Promise<ToolPreset> {
 	const now = new Date().toISOString();
@@ -78,7 +78,7 @@ export async function removePreset(id: string) {
 
 export async function overwritePreset(
 	id: string,
-	values: Record<string, string | number | boolean>,
+	values: Record<string, unknown>,
 	headers?: Record<string, string>
 ) {
 	// Optimistic update

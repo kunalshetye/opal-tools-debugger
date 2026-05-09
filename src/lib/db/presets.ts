@@ -49,7 +49,7 @@ export async function deletePreset(id: string): Promise<void> {
 
 export async function updatePreset(
 	id: string,
-	values: Record<string, string | number | boolean>,
+	values: Record<string, unknown>,
 	headers?: Record<string, string>
 ): Promise<void> {
 	const db = await getDB();

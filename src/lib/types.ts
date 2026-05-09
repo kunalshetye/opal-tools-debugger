@@ -1,8 +1,14 @@
 export interface OpalParameter {
 	name: string;
-	type: 'string' | 'number' | 'boolean';
+	type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
 	required: boolean;
 	description: string;
+}
+
+export interface OpalAuthRequirement {
+	provider: string;
+	scope_bundle: string;
+	required: boolean;
 }
 
 export interface OpalFunction {
@@ -11,6 +17,8 @@ export interface OpalFunction {
 	endpoint: string;
 	http_method: string;
 	parameters: OpalParameter[];
+	auth_requirements?: OpalAuthRequirement[];
+	ui_resource?: string;
 }
 
 export interface DiscoveryResponse {
@@ -35,7 +43,7 @@ export interface ToolPreset {
 	toolName: string;
 	discoveryUrl: string;
 	presetName: string;
-	values: Record<string, string | number | boolean>;
+	values: Record<string, unknown>;
 	headers?: Record<string, string>;
 	createdAt: string;
 	updatedAt: string;

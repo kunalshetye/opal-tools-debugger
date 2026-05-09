@@ -86,7 +86,7 @@ describe('generateCurlFromResult', () => {
 			requestParams: { key: 'val' }
 		});
 		expect(result).toContain('-X POST');
-		expect(result).toContain("-d '{\"key\":\"val\"}'");
+		expect(result).toContain("-d '{\"parameters\":{\"key\":\"val\"}}'");
 	});
 
 	it('generates curl from a GET result without body', () => {
@@ -116,7 +116,7 @@ describe('generateCurlFromResult', () => {
 			requestParams: { name: 'updated', active: true }
 		});
 		expect(result).toContain('-X PUT');
-		expect(result).toContain("-d '{\"name\":\"updated\",\"active\":true}'");
+		expect(result).toContain("-d '{\"parameters\":{\"name\":\"updated\",\"active\":true}}'");
 	});
 
 	it('uses empty headers when requestHeaders is missing', () => {
@@ -138,6 +138,6 @@ describe('generateCurlFromResult', () => {
 			requestParams: { status: 'archived' }
 		});
 		expect(result).toContain('-X PATCH');
-		expect(result).toContain("-d '{\"status\":\"archived\"}'");
+		expect(result).toContain("-d '{\"parameters\":{\"status\":\"archived\"}}'");
 	});
 });

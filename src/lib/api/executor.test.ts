@@ -97,7 +97,7 @@ describe('executeTool', () => {
 			'https://api.example.com/tools/run',
 			expect.objectContaining({
 				method: 'POST',
-				body: JSON.stringify({ foo: 'bar' }),
+				body: JSON.stringify({ parameters: { foo: 'bar' } }),
 				headers: expect.objectContaining({
 					'Content-Type': 'application/json'
 				})
@@ -156,7 +156,7 @@ describe('executeTool', () => {
 			'https://api.example.com/items',
 			expect.objectContaining({
 				method: 'PUT',
-				body: JSON.stringify({ name: 'test' }),
+				body: JSON.stringify({ parameters: { name: 'test' } }),
 				headers: expect.objectContaining({
 					'Content-Type': 'application/json'
 				})
@@ -222,7 +222,7 @@ describe('executeTool', () => {
 			'https://api.example.com/items/1',
 			expect.objectContaining({
 				method: 'PATCH',
-				body: JSON.stringify({ name: 'updated' }),
+				body: JSON.stringify({ parameters: { name: 'updated' } }),
 				headers: expect.objectContaining({
 					'Content-Type': 'application/json'
 				})

@@ -38,7 +38,7 @@ export function generateCurlFromResult(result: {
 	const method = result.requestMethod;
 	const isBodyMethod = ['POST', 'PUT', 'PATCH'].includes(method);
 	const body = isBodyMethod && result.requestParams
-		? JSON.stringify(result.requestParams)
+		? JSON.stringify({ parameters: result.requestParams })
 		: undefined;
 
 	return generateCurl(method, result.requestUrl, result.requestHeaders ?? {}, body);
