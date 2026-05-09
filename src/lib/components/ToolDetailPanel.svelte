@@ -4,6 +4,8 @@
 	import { uiState, getResultsForTool, addResultForTool, clearResultsForTool, toggleSidebar } from '$lib/stores/ui.svelte';
 	import { presetsState, loadPresets, addPreset, removePreset, overwritePreset } from '$lib/stores/presets.svelte';
 	import { executeTool } from '$lib/api/executor';
+	import { executeInteraction } from '$lib/api/interactions';
+	import { readResource } from '$lib/api/resources';
 	import { mergePresetWithParameters } from '$lib/utils/preset-merge';
 	import { logInfo, logSuccess, logWarning, logError } from '$lib/stores/activity-log.svelte';
 	import { environmentsState } from '$lib/stores/environments.svelte';
@@ -11,12 +13,15 @@
 	import { isSandboxMode } from '$lib/sandbox/constants';
 	import { executeSandboxTool } from '$lib/sandbox/mock-executor';
 	import type { ToolPreset, ToolExecutionResult } from '$lib/types';
+	import { isProteusDocument, parseResourceText } from '$lib/utils/proteus-detect';
 	import ToolForm from './ToolForm.svelte';
 	import ResponseViewer from './ResponseViewer.svelte';
 	import PresetBar from './PresetBar.svelte';
 	import HeadersEditor from './HeadersEditor.svelte';
 	import ResponseDiff from './ResponseDiff.svelte';
 	import BulkExecutor from './BulkExecutor.svelte';
+	import ProteusDocumentView from './ProteusDocumentView.svelte';
+	import JsonViewer from './JsonViewer.svelte';
 
 	const tool = $derived(uiState.selectedToolName ? getToolByName(uiState.selectedToolName) : null);
 	const results = $derived(uiState.selectedToolName ? getResultsForTool(uiState.selectedToolName) : []);
@@ -27,6 +32,9 @@
 	let customHeaders: Array<{ key: string; value: string }> = $state([]);
 	let abortController: AbortController | null = $state(null);
 	let showDiff = $state(false);
+	let resourceLoading = $state(false);
+	let resourceError: string | null = $state(null);
+	let resourceDocument: unknown = $state(null);
 
 	const methodColors: Record<string, string> = {
 		POST: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
@@ -43,6 +51,8 @@
 			initialValues = null;
 			customHeaders = [];
 			showDiff = false;
+			resourceDocument = null;
+			resourceError = null;
 		}
 	});
 
@@ -158,6 +168,86 @@
 		handleExecute(params);
 	}
 
+	async function handleLoadResource() {
+		if (!tool?.ui_resource) return;
+		resourceLoading = true;
+		resourceError = null;
+		try {
+			const resource = await readResource(
+				connectionState.baseUrl,
+				tool.ui_resource,
+				connectionState.bearerToken || undefined,
+				undefined,
+				getCustomHeadersObj()
+			);
+			resourceDocument = parseResourceText(resource.text);
+			logSuccess('discovery', `Loaded UI resource ${tool.ui_resource}`, resource, tool.name);
+		} catch (err) {
+			resourceError = err instanceof Error ? err.message : 'Failed to load UI resource';
+			logError('discovery', resourceError, err, tool.name);
+		} finally {
+			resourceLoading = false;
+		}
+	}
+
+	async function handleIslandAction(
+		action: { endpoint: string; name: string },
+		parameters: Record<string, unknown>
+	) {
+		if (!tool) return;
+		if (action.endpoint === '/interactions/execute') {
+			const body = await executeInteraction(
+				connectionState.baseUrl,
+				action.name,
+				parameters,
+				connectionState.bearerToken || undefined,
+				undefined,
+				getCustomHeadersObj()
+			);
+			addResultForTool(tool.name, {
+				status: 200,
+				headers: {},
+				body,
+				duration: 0,
+				requestParams: parameters,
+				requestUrl: `${connectionState.baseUrl}/interactions/execute`,
+				requestMethod: 'POST'
+			});
+			return;
+		}
+		const result = await executeTool(
+			connectionState.baseUrl,
+			action.endpoint,
+			parameters,
+			connectionState.bearerToken || undefined,
+			'POST',
+			undefined,
+			getCustomHeadersObj()
+		);
+		addResultForTool(tool.name, result);
+	}
+
+	async function handleProteusInteraction(name: string, parameters: Record<string, unknown>) {
+		if (!tool) return;
+		const body = await executeInteraction(
+			connectionState.baseUrl,
+			name,
+			parameters,
+			connectionState.bearerToken || undefined,
+			undefined,
+			getCustomHeadersObj()
+		);
+		addResultForTool(tool.name, {
+			status: 200,
+			headers: {},
+			body,
+			duration: 0,
+			requestParams: parameters,
+			requestUrl: `${connectionState.baseUrl}/interactions/execute`,
+			requestMethod: 'POST'
+		});
+	}
+
 	async function handleBulkExecute(presetsList: ToolPreset[]) {
 		if (!tool || !uiState.selectedToolName) return;
 		for (const preset of presetsList) {
@@ -247,6 +337,37 @@
 						headers={customHeaders}
 						onchange={handleHeadersChange}
 					/>
+					{#if tool.ui_resource}
+						<div class="mt-5 space-y-3">
+							<div class="flex items-center justify-between">
+								<h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+									UI Resource
+								</h3>
+								<button
+									type="button"
+									onclick={handleLoadResource}
+									disabled={resourceLoading}
+									class="rounded bg-teal-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-600 disabled:opacity-60"
+								>
+									{resourceLoading ? 'Loading...' : 'Load'}
+								</button>
+							</div>
+							{#if resourceError}
+								<p class="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300">{resourceError}</p>
+							{/if}
+							{#if resourceDocument !== null}
+								<div class="max-h-[32rem] overflow-auto rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
+									{#if isProteusDocument(resourceDocument)}
+										<ProteusDocumentView document={resourceDocument} oninteraction={handleProteusInteraction} />
+									{:else if typeof resourceDocument === 'object'}
+										<JsonViewer data={resourceDocument} />
+									{:else}
+										<pre class="font-mono text-sm text-zinc-700 dark:text-zinc-300">{String(resourceDocument)}</pre>
+									{/if}
+								</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 
 				<div>
@@ -295,11 +416,11 @@
 											Previous execution ({result.status}, {result.duration}ms)
 										</summary>
 										<div class="mt-2">
-											<ResponseViewer {result} onreplay={handleReplay} />
+											<ResponseViewer {result} onreplay={handleReplay} onislandaction={handleIslandAction} />
 										</div>
 									</details>
 								{:else}
-									<ResponseViewer {result} onreplay={handleReplay} />
+									<ResponseViewer {result} onreplay={handleReplay} onislandaction={handleIslandAction} />
 								{/if}
 							{/each}
 						</div>

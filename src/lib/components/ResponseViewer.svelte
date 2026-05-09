@@ -3,15 +3,21 @@
 	import { getStatusInfo } from '$lib/utils/http-status';
 	import { generateCurlFromResult } from '$lib/utils/curl-export';
 	import { isAbdResponse } from '$lib/utils/abd-detect';
+	import { isIslandResponse } from '$lib/utils/island-detect';
 	import JsonViewer from './JsonViewer.svelte';
 	import AbdDocumentView from './AbdDocumentView.svelte';
+	import IslandResponseView from './IslandResponseView.svelte';
 
 	interface Props {
 		result: ToolExecutionResult;
 		onreplay?: (params: Record<string, unknown>) => void;
+		onislandaction?: (
+			action: { name: string; label: string; type: string; endpoint: string; operation?: string },
+			parameters: Record<string, unknown>
+		) => void;
 	}
 
-	let { result, onreplay }: Props = $props();
+	let { result, onreplay, onislandaction }: Props = $props();
 
 	let activeTab: 'body' | 'headers' | 'timing' = $state('body');
 	let copied = $state(false);
@@ -19,10 +25,11 @@
 	let bodyViewMode: 'rendered' | 'raw' = $state('rendered');
 
 	const abdDetected = $derived(isAbdResponse(result.body, result.headers));
+	const islandDetected = $derived(isIslandResponse(result.body));
 
 	$effect(() => {
 		// Reset to rendered view when result changes
-		if (abdDetected) {
+		if (abdDetected || islandDetected) {
 			bodyViewMode = 'rendered';
 		}
 	});
@@ -130,7 +137,7 @@
 	<div class="p-4">
 		{#if activeTab === 'body'}
 			<div class="relative">
-				{#if abdDetected}
+				{#if abdDetected || islandDetected}
 					<!-- ABD sub-tab toggle -->
 					<div class="mb-3 flex items-center gap-1 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-700" style="width: fit-content;">
 						<button
@@ -153,7 +160,11 @@
 				>
 					{copied ? 'Copied!' : 'Copy'}
 				</button>
-				{#if abdDetected && bodyViewMode === 'rendered'}
+				{#if islandDetected && bodyViewMode === 'rendered'}
+					<div class="max-h-[32rem] overflow-auto rounded-md bg-zinc-50 p-4 dark:bg-zinc-900">
+						<IslandResponseView response={result.body as { message?: string; config?: { islands?: unknown[] } }} onaction={onislandaction} />
+					</div>
+				{:else if abdDetected && bodyViewMode === 'rendered'}
 					<div class="max-h-[32rem] overflow-auto rounded-md bg-zinc-50 p-4 dark:bg-zinc-900">
 						<AbdDocumentView response={result.body as Record<string, unknown>} />
 					</div>
